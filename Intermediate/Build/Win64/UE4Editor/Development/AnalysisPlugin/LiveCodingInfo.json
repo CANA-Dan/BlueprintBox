@@ -1,0 +1,13 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.AnalysisPlugin.cpp.obj": [
+			"AnalysisPlugin.cpp.obj",
+			"AnalysisPluginBPLibrary.cpp.obj"
+		],
+		"Module.AnalysisPlugin.gen.cpp.obj": [
+			"AnalysisPlugin.init.gen.cpp.obj",
+			"AnalysisPluginBPLibrary.gen.cpp.obj"
+		]
+	}
+}

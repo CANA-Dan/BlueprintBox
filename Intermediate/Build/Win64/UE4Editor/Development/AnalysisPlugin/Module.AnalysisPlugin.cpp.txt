@@ -1,0 +1,33 @@
+D:\Documents\Unreal Projects\ParEdit\Plugins\AnalysisPlugin\Intermediate\Build\Win64\UE4Editor\Development\AnalysisPlugin\Definitions.AnalysisPlugin.h
+D:/Documents/Unreal Projects/ParEdit/Plugins/AnalysisPlugin/Source/AnalysisPlugin/Private/AnalysisPlugin.cpp
+D:\Documents\Unreal Projects\ParEdit\Plugins\AnalysisPlugin\Source\AnalysisPlugin\Public\AnalysisPlugin.h
+D:/Documents/Unreal Projects/ParEdit/Plugins/AnalysisPlugin/Source/AnalysisPlugin/Private/AnalysisPluginBPLibrary.cpp
+D:\Documents\Unreal Projects\ParEdit\Plugins\AnalysisPlugin\Source\AnalysisPlugin\Public\AnalysisPluginBPLibrary.h
+C:\Unreal Engine\UE_4.26\Engine\Plugins\Marketplace\AudioAnalysisTools\Source\AudioAnalysisTools\Public\AudioAnalysisToolsLibrary.h
+C:\Unreal Engine\UE_4.26\Engine\Plugins\Marketplace\AudioAnalysisTools\Source\RuntimeAudioImporter\Public\ImportedSoundWave.h
+C:\Unreal Engine\UE_4.26\Engine\Plugins\Marketplace\AudioAnalysisTools\Source\RuntimeAudioImporter\Public\RuntimeAudioImporterTypes.h
+C:\Unreal Engine\UE_4.26\Engine\Plugins\Marketplace\AudioAnalysisTools\Source\RuntimeAudioImporter\Public\RuntimeAudioImporterDefines.h
+C:\Unreal Engine\UE_4.26\Engine\Plugins\Marketplace\AudioAnalysisTools\Intermediate\Build\Win64\UE4Editor\Inc\RuntimeAudioImporter\RuntimeAudioImporterTypes.generated.h
+C:\Unreal Engine\UE_4.26\Engine\Source\Runtime\Engine\Classes\Sound/SoundWaveProcedural.h
+C:\Unreal Engine\UE_4.26\Engine\Intermediate\Build\Win64\UE4Editor\Inc\Engine\SoundWaveProcedural.generated.h
+C:\Unreal Engine\UE_4.26\Engine\Plugins\Marketplace\AudioAnalysisTools\Intermediate\Build\Win64\UE4Editor\Inc\RuntimeAudioImporter\ImportedSoundWave.generated.h
+C:\Unreal Engine\UE_4.26\Engine\Plugins\Marketplace\AudioAnalysisTools\Source\AudioAnalysisTools\Public\WindowsLibrary.h
+C:\Unreal Engine\UE_4.26\Engine\Plugins\Marketplace\AudioAnalysisTools\Intermediate\Build\Win64\UE4Editor\Inc\AudioAnalysisTools\WindowsLibrary.generated.h
+C:\Unreal Engine\UE_4.26\Engine\Plugins\Marketplace\AudioAnalysisTools\Intermediate\Build\Win64\UE4Editor\Inc\AudioAnalysisTools\AudioAnalysisToolsLibrary.generated.h
+D:\Documents\Unreal Projects\ParEdit\Plugins\AnalysisPlugin\Intermediate\Build\Win64\UE4Editor\Inc\AnalysisPlugin\AnalysisPluginBPLibrary.generated.h
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\INCLUDE\algorithm
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\INCLUDE\xmemory
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\INCLUDE\limits
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\INCLUDE\cfloat
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\INCLUDE\cwchar
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\INCLUDE\cstdio
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\INCLUDE\isa_availability.h
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\INCLUDE\xutility
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\INCLUDE\utility
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\INCLUDE\string
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\INCLUDE\xstring
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\INCLUDE\iosfwd
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\INCLUDE\cctype
+C:\Unreal Engine\UE_4.26\Engine\Source\ThirdParty\Kiss_FFT\kiss_fft129\tools/kiss_fftnd.h
+C:\Unreal Engine\UE_4.26\Engine\Source\ThirdParty\Kiss_FFT\kiss_fft129\kiss_fft.h
+C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt\math.h
