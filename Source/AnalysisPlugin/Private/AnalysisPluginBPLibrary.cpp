@@ -565,13 +565,13 @@ void UAnalysisPluginBPLibrary::ByteArrayToIntAndChar(TArray<uint8> ArrayOfMidiBy
 	}
 	uint8 var1 = ArrayOfMidiBytes[Index];
 	byte = var1;
+	Char[0] = char(byte);
 
 	if (Index + 1 > length) {
 		return;
 	}
 	uint8 var2 = ArrayOfMidiBytes[Index + 1];
 	SixteenBitInt = var1 | (var2 << 8);
-	Char[0] = char(SixteenBitInt);
 
 	if (Index + 2 > length) {
 		return;
