@@ -540,7 +540,7 @@ void UAnalysisPluginBPLibrary::DoneCalculating_Internal(FSpectrogramOutput outpu
 
 }
 
-void UAnalysisPluginBPLibrary::ImportMidiFromDisk(FString Path, FMidiStruct& MidiReturn, TArray<uint8>& ArrayOfMidiBytes, FString& ErrorLog)
+void UAnalysisPluginBPLibrary::ImportBinaryFromDisk(FString Path, FMidiStruct& MidiReturn, TArray<uint8>& ArrayOfBytes, FString& ErrorLog)
 {
 	FText error;
 
@@ -549,7 +549,7 @@ void UAnalysisPluginBPLibrary::ImportMidiFromDisk(FString Path, FMidiStruct& Mid
 		return;
 
 	}
-	FFileHelper::LoadFileToArray(ArrayOfMidiBytes, *Path);
+	FFileHelper::LoadFileToArray(ArrayOfBytes, *Path);
 	ErrorLog = "Success";
 
 }
@@ -558,6 +558,7 @@ void UAnalysisPluginBPLibrary::ImportMidiFromDisk(FString Path, FMidiStruct& Mid
 
 void UAnalysisPluginBPLibrary::ByteArrayToIntAndChar(TArray<uint8> ArrayOfMidiBytes, int32 Index, uint8& byte, int32& SixteenBitInt, int32& TwentyFourBitInt, int32& ThiryTwoBitInt, FString& Char)
 {
+	ArrayOfMidiBytes.EmplaceAt(0, uint8(77));
 	Char = ",";
 	int32 length = ArrayOfMidiBytes.Num() - 1;
 	if (Index > length) {

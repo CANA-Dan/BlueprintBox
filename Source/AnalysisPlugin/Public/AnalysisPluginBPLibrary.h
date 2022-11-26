@@ -69,6 +69,20 @@ struct FWaveformInput
 
 };
 
+//Input nodes for the waveform. Allows you to simplify your setup when it comes to making a thread pool.
+USTRUCT(BlueprintType)
+struct FMidiChunk
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<uint8> MidiChunk;
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<uint8> MidiChunk;
+
+};
+
 UENUM(BlueprintType)
 enum FGenerationStatus
 {
@@ -103,7 +117,7 @@ enum FGenerationType
 };
 
 UENUM(BlueprintType)
-enum FMidiType
+enum FMidiNoteType
 {
 
 	NoteOff			UMETA(DisplayName = "Note Off"),
@@ -119,6 +133,18 @@ enum FMidiType
 	PitchBend		UMETA(DisplayName = "PitchBend"),
 
 	SystemMessage	UMETA(DisplayName = "non-musical command"),
+
+};
+
+UENUM(BlueprintType)
+enum FMidiFormat
+{
+
+	Single			UMETA(DisplayName = "Single MIDI Track"),
+
+	Simultanious	UMETA(DisplayName = "Multi Track Simultanious"),
+
+	Sequence		UMETA(DisplayName = "Multi Track Sequentual"),
 
 };
 
@@ -160,8 +186,11 @@ struct FMidiStruct
 {
 	GENERATED_BODY()
 
-		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "generation status"))
-		TEnumAsByte<FGenerationStatus> Status;
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The array containing all your MIDI values"))
+		TArray<uint8> Chunk;
+		
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "what time time signature the notes will be on."))
+		int32 TimeDivision;
 
 };
 
@@ -221,13 +250,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | Audio Analysis", DisplayName = "Calculate Spectrogram Async")
 		static void CalculateSpectrogramAsync(UAnalysisPluginBPLibrary* AnalysisPluginRef, FGenerationType type, FWaveformInput WaveformInput, FSpectrogramInput SpectrogramInput, int32 ChunkIndex, int32 ThreadID);
 
-	//Allows you to load a midi file into a usable format in unreal engine
-	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | Midi Stuff (unfinished)")
-		static void ImportMidiFromDisk(FString Path, FMidiStruct& MidiReturn, TArray<uint8>& ArrayOfMidiBytes, FString& ErrorLog);
+	//Used for importing MIDI, but can be used to import any file in theory.
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Import Binary From Disk")
+		static void ImportBinaryFromDisk(FString Path, FMidiStruct& MidiReturn, TArray<uint8>& ArrayOfBytes, FString& ErrorLog);
 
-	//Allows you to convert an array of bytes into its higher value counterparts
-	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | Midi Stuff (unfinished)")
+	//Allows you to convert an array of bytes into its higher value counterparts.
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Byte Array To Int And Char")
 		static void ByteArrayToIntAndChar(TArray<uint8> ArrayOfMidiBytes, int32 Index, uint8& byte, int32& SixteenBitInt, int32& TwentyFourBitInt, int32& ThiryTwoBitInt, FString& Char);
+
+	//Finds and provides header data
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Provide Midi Chunks")
+		static void ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMidiFormat& format);
+
 
 protected:
 
