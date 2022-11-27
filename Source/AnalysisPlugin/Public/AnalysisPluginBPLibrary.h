@@ -79,7 +79,7 @@ struct FMidiChunk
 	TArray<uint8> MidiChunk;
 
 	UPROPERTY(BlueprintReadWrite)
-	TArray<uint8> MidiChunk;
+	FString ChunkString;
 
 };
 
@@ -185,12 +185,18 @@ USTRUCT(BlueprintType)
 struct FMidiStruct
 {
 	GENERATED_BODY()
+		
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The Type of midi track this is"))
+		TEnumAsByte<FMidiFormat> Format;
 
-		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The array containing all your MIDI values"))
-		TArray<uint8> Chunk;
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "How many midi tracks are in this midi file."))
+		int32 TrackCount;
 		
 		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "what time time signature the notes will be on."))
 		int32 TimeDivision;
+
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The array containing all your MIDI values"))
+		TArray<uint8> Chunk;
 
 };
 
@@ -250,17 +256,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | Audio Analysis", DisplayName = "Calculate Spectrogram Async")
 		static void CalculateSpectrogramAsync(UAnalysisPluginBPLibrary* AnalysisPluginRef, FGenerationType type, FWaveformInput WaveformInput, FSpectrogramInput SpectrogramInput, int32 ChunkIndex, int32 ThreadID);
 
-	//Used for importing MIDI, but can be used to import any file in theory.
+	//Used for importing MIDI, but can be used to import any file in theory. Note that for whatever reason, it dropps the first element of the array. Insert a uint8 of 77 at index 0 for midi.
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Import Binary From Disk")
-		static void ImportBinaryFromDisk(FString Path, FMidiStruct& MidiReturn, TArray<uint8>& ArrayOfBytes, FString& ErrorLog);
+		static void ImportBinaryFromDisk(FString Path, TArray<uint8>& ArrayOfBytes, FString& ErrorLog);
 
-	//Allows you to convert an array of bytes into its higher value counterparts.
-	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Byte Array To Int And Char")
-		static void ByteArrayToIntAndChar(TArray<uint8> ArrayOfMidiBytes, int32 Index, uint8& byte, int32& SixteenBitInt, int32& TwentyFourBitInt, int32& ThiryTwoBitInt, FString& Char);
+	//Allows you to convert an array of bytes into its higher value int counterparts. note that these will be unsigned ints
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Byte Array To Int")
+		static void ByteArrayToInt(TArray<uint8> ArrayOfBytes, int32 Index, uint8& byte, int32& SixteenBitInt, int32& TwentyFourBitInt, int32& ThiryTwoBitInt);
+
+	//Converts a byte into a char. Used to find MIDI Chunk headers, but usable for general binary files.
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Byte Array To Char")
+		static FString ByteArrayToChar(TArray<uint8> ArrayOfBytes, int32 Index);
 
 	//Finds and provides header data
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Provide Midi Chunks")
-		static void ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMidiFormat& format);
+		static void ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk);
 
 
 protected:

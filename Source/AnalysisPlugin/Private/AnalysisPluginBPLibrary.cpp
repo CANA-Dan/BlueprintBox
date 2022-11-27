@@ -168,7 +168,7 @@ void UAnalysisPluginBPLibrary::MakeSpectrogramColorArray(FSpectrogramInput Spect
 	int32 TextureWidth = SpectrogramBands + 1;
 
 	//audio file setup
-	int32 SampleRate = ImportedSoundWave->SamplingRate;
+	int32 SampleRate = ImportedSoundWave->GetSampleRate();
 	int32 NumChannels = ImportedSoundWave->NumChannels;
 	float SongLength = ImportedSoundWave->GetDuration();
 
@@ -286,7 +286,7 @@ void UAnalysisPluginBPLibrary::MakeWaveformColorArray(FWaveformInput WaveformVal
 	UImportedSoundWave* ImportedSoundWave = WaveformValues.ImportedSoundWave.Get();
 	UAudioAnalysisToolsLibrary* AudioAnalysisObject = WaveformValues.AudioAnalysisObject.Get();
 
-	int32 sampleRate = ImportedSoundWave->SamplingRate;
+	int32 sampleRate = ImportedSoundWave->GetSampleRate();
 	float songLength = ImportedSoundWave->GetDuration();
 
 	int32 waveformSampleRate = sampleRate / WaveformValues.WaveformSampleRate;
@@ -540,7 +540,7 @@ void UAnalysisPluginBPLibrary::DoneCalculating_Internal(FSpectrogramOutput outpu
 
 }
 
-void UAnalysisPluginBPLibrary::ImportBinaryFromDisk(FString Path, FMidiStruct& MidiReturn, TArray<uint8>& ArrayOfBytes, FString& ErrorLog)
+void UAnalysisPluginBPLibrary::ImportBinaryFromDisk(FString Path, TArray<uint8>& ArrayOfBytes, FString& ErrorLog)
 {
 	FText error;
 
@@ -556,33 +556,83 @@ void UAnalysisPluginBPLibrary::ImportBinaryFromDisk(FString Path, FMidiStruct& M
 
 
 
-void UAnalysisPluginBPLibrary::ByteArrayToIntAndChar(TArray<uint8> ArrayOfMidiBytes, int32 Index, uint8& byte, int32& SixteenBitInt, int32& TwentyFourBitInt, int32& ThiryTwoBitInt, FString& Char)
+void UAnalysisPluginBPLibrary::ByteArrayToInt(TArray<uint8> ArrayOfBytes, int32 Index, uint8& byte, int32& SixteenBitInt, int32& TwentyFourBitInt, int32& ThiryTwoBitInt)
 {
-	ArrayOfMidiBytes.EmplaceAt(0, uint8(77));
-	Char = ",";
-	int32 length = ArrayOfMidiBytes.Num() - 1;
+	int32 length = ArrayOfBytes.Num() - 1;
 	if (Index > length) {
 		return;
 	}
-	uint8 var1 = ArrayOfMidiBytes[Index];
+	uint8 var1 = ArrayOfBytes[Index];
 	byte = var1;
-	Char[0] = char(byte);
 
 	if (Index + 1 > length) {
 		return;
 	}
-	uint8 var2 = ArrayOfMidiBytes[Index + 1];
+	uint8 var2 = ArrayOfBytes[Index + 1];
 	SixteenBitInt = var1 | (var2 << 8);
 
 	if (Index + 2 > length) {
 		return;
 	}
-	uint8 var3 = ArrayOfMidiBytes[Index + 2];
+	uint8 var3 = ArrayOfBytes[Index + 2];
 	TwentyFourBitInt = var1 | (var2 << 8) | (var3 << 16);
 
 	if (Index + 3 > length) {
 		return;
 	}
-	uint8 var4 = ArrayOfMidiBytes[Index + 3];
+	uint8 var4 = ArrayOfBytes[Index + 3];
 	ThiryTwoBitInt = var1 | (var2 << 8) | (var3 << 16) | (var4 << 24);
+}
+
+FString UAnalysisPluginBPLibrary::ByteArrayToChar(TArray<uint8> ArrayOfBytes, int32 Index)
+{
+	int32 length = ArrayOfBytes.Num() - 1;
+	if (Index > length) {
+		return "";
+	}
+	FString Char;
+
+	Char = ",";
+	Char[0] = char(ArrayOfBytes[Index]);
+	return Char;
+}
+
+void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk)
+{
+	int32 len = ArrayOfBytes.Num() - 4;
+	int32 uintToInt = pow(2, 31);
+
+	for (int32 i = 0; i < len; i++) {
+		FString Char;
+		Char = ",";
+		Char = ByteArrayToChar(ArrayOfBytes, i);
+		//initial check for if its a midi header.
+		if (Char == "M") {
+			//actual check for initial midi header. Should be right at the beginning of the file, but, yah know, never can be sure.
+			if ("MThd" == ByteArrayToChar(ArrayOfBytes, i) + ByteArrayToChar(ArrayOfBytes, i + 1) + ByteArrayToChar(ArrayOfBytes, i + 2) + ByteArrayToChar(ArrayOfBytes, i + 3)) {
+				i = i + 4;
+
+				uint32 headerLen = ArrayOfBytes[i] | (ArrayOfBytes[i + 1] << 8) | (ArrayOfBytes[i + 2] << 16) | (ArrayOfBytes[i + 3] << 24);
+				i = i + 4;
+
+				//midi type. should be a direct conversion. not sure why its 16 bits long when 8 bits would have been fine, but it is.
+				MidiChunk.Format = FMidiFormat(ArrayOfBytes[i] | (ArrayOfBytes[i + 1] << 8));
+				i = i + 2;
+
+				//how many midi tracks this file contains
+				MidiChunk.TrackCount = ArrayOfBytes[i] | (ArrayOfBytes[i + 1] << 8);
+				i = i + 2;
+
+
+				MidiChunk.TimeDivision = ArrayOfBytes[i] | (ArrayOfBytes[i + 1] << 8);
+				i = i + 2;
+
+				//just to be sure the location we are going to is the next header
+				i = i - 6 + headerLen;
+
+				break;
+			};
+		}
+	}
+	
 }
