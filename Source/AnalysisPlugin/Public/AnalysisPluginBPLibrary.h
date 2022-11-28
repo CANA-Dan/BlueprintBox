@@ -256,13 +256,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | Audio Analysis", DisplayName = "Calculate Spectrogram Async")
 		static void CalculateSpectrogramAsync(UAnalysisPluginBPLibrary* AnalysisPluginRef, FGenerationType type, FWaveformInput WaveformInput, FSpectrogramInput SpectrogramInput, int32 ChunkIndex, int32 ThreadID);
 
-	//Used for importing MIDI, but can be used to import any file in theory. Note that for whatever reason, it dropps the first element of the array. Insert a uint8 of 77 at index 0 for midi.
-	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Import Binary From Disk")
+	//Used for importing MIDI, but can be used to import any binary file in theory.
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "Import MIDI/Binary From Disk")
 		static void ImportBinaryFromDisk(FString Path, TArray<uint8>& ArrayOfBytes, FString& ErrorLog);
 
-	//Allows you to convert an array of bytes into its higher value int counterparts. note that these will be unsigned ints
+	//Allows you to convert an array of bytes into its higher value int counterparts.
+	//If you want something like a 16 bit int, then give only 2 bytes. Bytes more than index 7 will be ignored.
+	//@param BigEndian - BigEndian is also known as motorola format. Reads the bytes from left to right. Set false to read bytes from right to left (intel format/LittleEndian).
+	//@param Signed - Allows you to specifiy if you want the value signed or not. Signed means the value returned will always be positive, but only go upto 2^63. Unsigned means that any value lower than 2^63 will always be negitive, but you get all 64 bits accessable to you. If you dont know what you are doing, set this to true.
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Byte Array To Int")
-		static void ByteArrayToInt(TArray<uint8> ArrayOfBytes, int32 Index, uint8& byte, int32& SixteenBitInt, int32& TwentyFourBitInt, int32& ThiryTwoBitInt);
+		static int64 ByteArrayToInt(TArray<uint8> ArrayOfBytes, bool BigEndian, bool Signed);
 
 	//Converts a byte into a char. Used to find MIDI Chunk headers, but usable for general binary files.
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Byte Array To Char")
@@ -270,7 +273,7 @@ public:
 
 	//Finds and provides header data
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Provide Midi Chunks")
-		static void ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk);
+		static void ProvideMidiChunks(const TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk);
 
 
 protected:

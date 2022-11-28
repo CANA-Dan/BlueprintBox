@@ -540,6 +540,7 @@ void UAnalysisPluginBPLibrary::DoneCalculating_Internal(FSpectrogramOutput outpu
 
 }
 
+
 void UAnalysisPluginBPLibrary::ImportBinaryFromDisk(FString Path, TArray<uint8>& ArrayOfBytes, FString& ErrorLog)
 {
 	FText error;
@@ -551,37 +552,33 @@ void UAnalysisPluginBPLibrary::ImportBinaryFromDisk(FString Path, TArray<uint8>&
 	}
 	FFileHelper::LoadFileToArray(ArrayOfBytes, *Path);
 	ErrorLog = "Success";
-
 }
 
 
-
-void UAnalysisPluginBPLibrary::ByteArrayToInt(TArray<uint8> ArrayOfBytes, int32 Index, uint8& byte, int32& SixteenBitInt, int32& TwentyFourBitInt, int32& ThiryTwoBitInt)
+int64 UAnalysisPluginBPLibrary::ByteArrayToInt(const TArray<uint8> ArrayOfBytes, bool BigEndian, bool Signed)
 {
-	int32 length = ArrayOfBytes.Num() - 1;
-	if (Index > length) {
-		return;
+	if (ArrayOfBytes.Num() == 0) {
+		return 0;
 	}
-	uint8 var1 = ArrayOfBytes[Index];
-	byte = var1;
+	TArray<uint8> Bytes = ArrayOfBytes;
+	if (ArrayOfBytes.Num() > 8) {
+		Bytes.SetNum(8, true);
+	}
+	
+	uint64 num = 0;
+	int32 len = Bytes.Num() - 1;
+	if (BigEndian == false) {
+		Algo::Reverse(Bytes);
+	}
 
-	if (Index + 1 > length) {
-		return;
+	for (int32 i = 0; i <= len; i++) {
+		num = num + (Bytes[i] * pow(256, len - i));
 	}
-	uint8 var2 = ArrayOfBytes[Index + 1];
-	SixteenBitInt = var1 | (var2 << 8);
 
-	if (Index + 2 > length) {
-		return;
+	if (Signed == false) {
+		num = num - pow(2,63);
 	}
-	uint8 var3 = ArrayOfBytes[Index + 2];
-	TwentyFourBitInt = var1 | (var2 << 8) | (var3 << 16);
-
-	if (Index + 3 > length) {
-		return;
-	}
-	uint8 var4 = ArrayOfBytes[Index + 3];
-	ThiryTwoBitInt = var1 | (var2 << 8) | (var3 << 16) | (var4 << 24);
+	return int64(num);
 }
 
 FString UAnalysisPluginBPLibrary::ByteArrayToChar(TArray<uint8> ArrayOfBytes, int32 Index)
@@ -599,33 +596,56 @@ FString UAnalysisPluginBPLibrary::ByteArrayToChar(TArray<uint8> ArrayOfBytes, in
 
 void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk)
 {
-	int32 len = ArrayOfBytes.Num() - 4;
+	int32 length = ArrayOfBytes.Num();
 	int32 uintToInt = pow(2, 31);
 
-	for (int32 i = 0; i < len; i++) {
+	for (int32 i = 0; i < length; i++) {
 		FString Char;
 		Char = ",";
 		Char = ByteArrayToChar(ArrayOfBytes, i);
 		//initial check for if its a midi header.
 		if (Char == "M") {
 			//actual check for initial midi header. Should be right at the beginning of the file, but, yah know, never can be sure.
-			if ("MThd" == ByteArrayToChar(ArrayOfBytes, i) + ByteArrayToChar(ArrayOfBytes, i + 1) + ByteArrayToChar(ArrayOfBytes, i + 2) + ByteArrayToChar(ArrayOfBytes, i + 3)) {
+			FString FullHeaderCheck = ByteArrayToChar(ArrayOfBytes, i) + ByteArrayToChar(ArrayOfBytes, i + 1) + ByteArrayToChar(ArrayOfBytes, i + 2) + ByteArrayToChar(ArrayOfBytes, i + 3);
+			if ("MThd" == FullHeaderCheck) {
 				i = i + 4;
+				int32 headerLen = 0;
+				TArray<uint8> Array;
 
-				uint32 headerLen = ArrayOfBytes[i] | (ArrayOfBytes[i + 1] << 8) | (ArrayOfBytes[i + 2] << 16) | (ArrayOfBytes[i + 3] << 24);
-				i = i + 4;
+				int len = 4;
+				Array.SetNum(len);
+				for (int j = 0; j < len; j++) {
+					Array[j] = ArrayOfBytes[i + j];
+				}
+				headerLen = ByteArrayToInt(Array, true, true);
+				i = i + len;
 
 				//midi type. should be a direct conversion. not sure why its 16 bits long when 8 bits would have been fine, but it is.
-				MidiChunk.Format = FMidiFormat(ArrayOfBytes[i] | (ArrayOfBytes[i + 1] << 8));
-				i = i + 2;
+				len = 2;
+				Array.SetNum(len);
+				for (int j = 0; j < len; j++) {
+					Array[j] = ArrayOfBytes[i + j];
+				}
+				MidiChunk.Format = FMidiFormat(ByteArrayToInt(Array, true, true));
+				i = i + len;
 
 				//how many midi tracks this file contains
-				MidiChunk.TrackCount = ArrayOfBytes[i] | (ArrayOfBytes[i + 1] << 8);
-				i = i + 2;
+				len = 2;
+				Array.SetNum(len);
+				for (int j = 0; j < len; j++) {
+					Array[j] = ArrayOfBytes[i + j];
+				}
+				MidiChunk.TrackCount = ByteArrayToInt(Array, true, true);
+				i = i + len;
 
-
-				MidiChunk.TimeDivision = ArrayOfBytes[i] | (ArrayOfBytes[i + 1] << 8);
-				i = i + 2;
+				//expected values are 192, 128, 96 or something.
+				len = 2;
+				Array.SetNum(len);
+				for (int j = 0; j < len; j++) {
+					Array[j] = ArrayOfBytes[i + j];
+				}
+				MidiChunk.TimeDivision = ByteArrayToInt(Array, true, true);
+				i = i + len;
 
 				//just to be sure the location we are going to is the next header
 				i = i - 6 + headerLen;
@@ -634,5 +654,4 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 			};
 		}
 	}
-	
 }
