@@ -598,13 +598,16 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 {
 	int32 length = ArrayOfBytes.Num();
 	int32 uintToInt = pow(2, 31);
+	int32 Index = 0;
 
-	for (int32 i = 0; i < length; i++) {
+	for (int32 i = Index; i < length; i++) {
 		FString Char;
 		Char = ",";
 		Char = ByteArrayToChar(ArrayOfBytes, i);
+
 		//initial check for if its a midi header.
 		if (Char == "M") {
+			
 			//actual check for initial midi header. Should be right at the beginning of the file, but, yah know, never can be sure.
 			FString FullHeaderCheck = ByteArrayToChar(ArrayOfBytes, i) + ByteArrayToChar(ArrayOfBytes, i + 1) + ByteArrayToChar(ArrayOfBytes, i + 2) + ByteArrayToChar(ArrayOfBytes, i + 3);
 			if ("MThd" == FullHeaderCheck) {
@@ -648,9 +651,51 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 				i = i + len;
 
 				//just to be sure the location we are going to is the next header
-				i = i - 6 + headerLen;
+				Index = i - 6 + headerLen;
 
 				break;
+			};
+		}
+	}
+
+	MidiChunk.Chunks.SetNum(MidiChunk.TrackCount);
+
+	//now getting each chunk. 
+	for (int32 i = MidiChunk.TrackCount; i < MidiChunk.TrackCount; i++) {
+		FString Char;
+		Char = ",";
+		Char = ByteArrayToChar(ArrayOfBytes, Index);
+
+		//initial check for if its a midi header.
+		if (Char == "M") {
+			
+			//gets this chunk.
+			FString FullHeaderCheck = ByteArrayToChar(ArrayOfBytes, i) + ByteArrayToChar(ArrayOfBytes, i + 1) + ByteArrayToChar(ArrayOfBytes, i + 2) + ByteArrayToChar(ArrayOfBytes, i + 3);
+			if ("MTrk" == FullHeaderCheck) {
+				Index = Index + 4;
+				int32 ChunkLen = 0;
+				TArray<uint8> Array;
+
+				//gets the byte length of this chunk.
+				int len = 4;
+				Array.SetNum(len);
+				for (int j = 0; j < len; j++) {
+					Array[j] = ArrayOfBytes[Index + j];
+				}
+
+				//gets the length for this chink
+				ChunkLen = ByteArrayToInt(Array, true, true);
+
+				//offsets the index to go the the start of the chunk.
+				Index = Index + len;
+
+				TArray<uint8> ArrayOfBytes;
+				ArrayOfBytes.SetNum(ChunkLen);
+				for (int j = 0; j < ChunkLen; j++) {
+					ArrayOfBytes[j] = ArrayOfBytes[Index + j];
+				}
+
+				MidiChunk.Chunks[i];
 			};
 		}
 	}

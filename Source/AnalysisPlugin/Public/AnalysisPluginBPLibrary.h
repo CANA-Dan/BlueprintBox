@@ -9,80 +9,6 @@
 #include "AnalysisPluginBPLibrary.generated.h"
 
 
-
-//Input nodes for the fft. Allows you to simplify your setup when it comes to making a thread pool.
-USTRUCT(BlueprintType)
-struct FSpectrogramInput
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadWrite)
-		TWeakObjectPtr<UImportedSoundWave> ImportedSoundWave;
-
-	UPROPERTY(BlueprintReadWrite)
-		TWeakObjectPtr<UAudioAnalysisToolsLibrary> AudioAnalysisObject;
-
-	//Allows you to tell the function how many threads are going to be used total
-	UPROPERTY(BlueprintReadWrite)
-		int32 ThreadCount;
-
-	//Determines how many times you wish for the spectrogram to calculate a second. 256 is reccommended.
-	UPROPERTY(BlueprintReadWrite)
-		int32 SpectrogramSamples;
-
-	//Determines how many bands you wish for the spectrogram to calculate. Value MUST be a multiple of two. 256 is reccommended.
-	UPROPERTY(BlueprintReadWrite)
-		int32 SpectrogramBands;
-
-	//defines how many bands you wish to chop from the low frequencies of the texture, as a float from 0 to 1. set to 0 to include everything from 0 up.
-	UPROPERTY(BlueprintReadWrite)
-		float BandsMin;
-
-	//defines how many bands you wish to chop from the high frequencies of the texture, as a float from 0 to 1. set to 1 to include everything from 1 down.
-	UPROPERTY(BlueprintReadWrite)
-		float BandsMax;
-};
-
-//Input nodes for the waveform. Allows you to simplify your setup when it comes to making a thread pool.
-USTRUCT(BlueprintType)
-struct FWaveformInput
-{
-	GENERATED_BODY()
-
-		UPROPERTY(BlueprintReadWrite)
-		TWeakObjectPtr<UImportedSoundWave> ImportedSoundWave;
-
-	UPROPERTY(BlueprintReadWrite)
-		TWeakObjectPtr<UAudioAnalysisToolsLibrary> AudioAnalysisObject;
-
-	//Allows you to tell the function how many threads are going to be used total.
-	UPROPERTY(BlueprintReadWrite)
-		int32 ThreadCount;
-
-	//Determines how often you wish to sample the original sound wave. Values higher than 2^14 will not generate.
-	UPROPERTY(BlueprintReadWrite)
-		int32 WaveformSampleRate;
-
-	//Determines the audio granularity of the waveform. also determines the texture width. Recommended to be an even number. Values of 256 are recommended.
-	UPROPERTY(BlueprintReadWrite)
-		int32 WaveformAudioGranularity;
-
-};
-
-//Input nodes for the waveform. Allows you to simplify your setup when it comes to making a thread pool.
-USTRUCT(BlueprintType)
-struct FMidiChunk
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadWrite)
-	TArray<uint8> MidiChunk;
-
-	UPROPERTY(BlueprintReadWrite)
-	FString ChunkString;
-
-};
-
 UENUM(BlueprintType)
 enum FGenerationStatus
 {
@@ -148,6 +74,66 @@ enum FMidiFormat
 
 };
 
+
+//Input nodes for the fft. Allows you to simplify your setup when it comes to making a thread pool.
+USTRUCT(BlueprintType)
+struct FSpectrogramInput
+{
+	GENERATED_BODY()
+
+		UPROPERTY(BlueprintReadWrite)
+		TWeakObjectPtr<UImportedSoundWave> ImportedSoundWave;
+
+		UPROPERTY(BlueprintReadWrite)
+		TWeakObjectPtr<UAudioAnalysisToolsLibrary> AudioAnalysisObject;
+
+		//Allows you to tell the function how many threads are going to be used total
+		UPROPERTY(BlueprintReadWrite)
+		int32 ThreadCount;
+
+		//Determines how many times you wish for the spectrogram to calculate a second. 256 is reccommended.
+		UPROPERTY(BlueprintReadWrite)
+		int32 SpectrogramSamples;
+
+		//Determines how many bands you wish for the spectrogram to calculate. Value MUST be a multiple of two. 256 is reccommended.
+		UPROPERTY(BlueprintReadWrite)
+		int32 SpectrogramBands;
+
+		//defines how many bands you wish to chop from the low frequencies of the texture, as a float from 0 to 1. set to 0 to include everything from 0 up.
+		UPROPERTY(BlueprintReadWrite)
+		float BandsMin;
+
+		//defines how many bands you wish to chop from the high frequencies of the texture, as a float from 0 to 1. set to 1 to include everything from 1 down.
+		UPROPERTY(BlueprintReadWrite)
+		float BandsMax;
+};
+
+//Input nodes for the waveform. Allows you to simplify your setup when it comes to making a thread pool.
+USTRUCT(BlueprintType)
+struct FWaveformInput
+{
+	GENERATED_BODY()
+
+		UPROPERTY(BlueprintReadWrite)
+		TWeakObjectPtr<UImportedSoundWave> ImportedSoundWave;
+
+		UPROPERTY(BlueprintReadWrite)
+		TWeakObjectPtr<UAudioAnalysisToolsLibrary> AudioAnalysisObject;
+
+		//Allows you to tell the function how many threads are going to be used total.
+		UPROPERTY(BlueprintReadWrite)
+		int32 ThreadCount;
+
+		//Determines how often you wish to sample the original sound wave. Values higher than 2^14 will not generate.
+		UPROPERTY(BlueprintReadWrite)
+		int32 WaveformSampleRate;
+
+		//Determines the audio granularity of the waveform. also determines the texture width. Recommended to be an even number. Values of 256 are recommended.
+		UPROPERTY(BlueprintReadWrite)
+		int32 WaveformAudioGranularity;
+
+};
+
 //Output from the delegate. break apart to get the goodies inside.
 USTRUCT(BlueprintType)
 struct FSpectrogramOutput
@@ -157,13 +143,13 @@ struct FSpectrogramOutput
 		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "generation status"))
 		TEnumAsByte<FGenerationStatus> Status;
 
-	UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "Stick back into the function"))
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "Stick back into the function"))
 		int32 ChunkIndex;
 
-	UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "Where in the song this particular chunk is representing in seconds", DisplayName = "Time (Seconds)"))
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "Where in the song this particular chunk is representing in seconds", DisplayName = "Time (Seconds)"))
 		int32 Time;
 
-	UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The texture for this chunk"))
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The texture for this chunk"))
 		TWeakObjectPtr<UTexture2D> Texture;
 
 };
@@ -173,12 +159,21 @@ struct FSpectrogramTextures
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "Where in the song this particular chunk is representing in seconds", DisplayName = "Time (Seconds)"))
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "Where in the song this particular chunk is representing in seconds", DisplayName = "Time (Seconds)"))
 		int32 Time;
 
-	UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The texture for this chunk"))
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The texture for this chunk"))
 		TWeakObjectPtr<UTexture2D> Texture;
 
+};
+
+USTRUCT(BlueprintType)
+struct FMidiChunk
+{
+	GENERATED_BODY()
+
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "A struct to make chunks easier to manage"))
+		TArray<uint8> Chunk;
 };
 
 USTRUCT(BlueprintType)
@@ -196,7 +191,7 @@ struct FMidiStruct
 		int32 TimeDivision;
 
 		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The array containing all your MIDI values"))
-		TArray<uint8> Chunk;
+		TArray<FMidiChunk> Chunks;
 
 };
 
