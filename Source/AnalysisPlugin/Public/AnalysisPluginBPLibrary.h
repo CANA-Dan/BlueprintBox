@@ -172,8 +172,12 @@ struct FMidiChunk
 {
 	GENERATED_BODY()
 
-		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "A struct to make chunks easier to manage"))
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "A single chunk. This includes everything inside the chunk, as well as the chunk header (MTrk)"))
 		TArray<uint8> Chunk;
+
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The chunk name for convience sake"))
+		FString Name;
+
 };
 
 USTRUCT(BlueprintType)
@@ -190,8 +194,8 @@ struct FMidiStruct
 		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "what time time signature the notes will be on."))
 		int32 TimeDivision;
 
-		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The array containing all your MIDI values"))
-		TArray<FMidiChunk> Chunks;
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The array containing all your MIDI chunks"))
+		TArray<FMidiChunk> ChunkArray;
 
 };
 

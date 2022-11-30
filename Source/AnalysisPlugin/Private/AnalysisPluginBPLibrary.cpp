@@ -594,6 +594,21 @@ FString UAnalysisPluginBPLibrary::ByteArrayToChar(TArray<uint8> ArrayOfBytes, in
 	return Char;
 }
 
+void systemMessages(TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk, int32 i, TArray<uint8> param1, int32 offset) {
+	TArray<uint8> param2;
+	param2.SetNum(param1.Num());
+	param2 = { ArrayOfBytes[offset - 1], ArrayOfBytes[offset] };
+
+	if (param1 == param2) {
+		int32 Len = ArrayOfBytes[offset + 1];
+		FString name;
+		for (int i = 0; i < Len; i++) {
+			name = name + UAnalysisPluginBPLibrary::ByteArrayToChar(ArrayOfBytes, offset + 2 + i);
+		}
+		MidiChunk.ChunkArray[i].Name = name;
+	}
+}
+
 void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk)
 {
 	int32 length = ArrayOfBytes.Num();
@@ -658,10 +673,21 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 		}
 	}
 
-	MidiChunk.Chunks.SetNum(MidiChunk.TrackCount);
+	MidiChunk.ChunkArray.SetNum(MidiChunk.TrackCount);
+
+	//system exclusive events. each one should be self explanitory. used this for refernce. scroll down to events http://midi.mathewvp.com/aboutMidi.htm
+	TArray<uint8> ChunkEnd = { 255, 47, 0 };
+
+	TArray<uint8> ChunkText = { 255, 1 };
+	TArray<uint8> ChunkCopyright = { 255, 2 };
+	TArray<uint8> ChunkTrackName = { 255, 3 };
+	TArray<uint8> ChunkInstrument = { 255, 4 };
+	TArray<uint8> ChunkLyric = { 255, 5 };
+	TArray<uint8> ChunkMarker = { 255, 6 };
+	TArray<uint8> ChunkCuePoint = { 255, 7 };
 
 	//now getting each chunk. 
-	for (int32 i = MidiChunk.TrackCount; i < MidiChunk.TrackCount; i++) {
+	for (int32 i = 0; i < MidiChunk.TrackCount; i++) {
 		FString Char;
 		Char = ",";
 		Char = ByteArrayToChar(ArrayOfBytes, Index);
@@ -670,7 +696,7 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 		if (Char == "M") {
 			
 			//gets this chunk.
-			FString FullHeaderCheck = ByteArrayToChar(ArrayOfBytes, i) + ByteArrayToChar(ArrayOfBytes, i + 1) + ByteArrayToChar(ArrayOfBytes, i + 2) + ByteArrayToChar(ArrayOfBytes, i + 3);
+			FString FullHeaderCheck = ByteArrayToChar(ArrayOfBytes, Index) + ByteArrayToChar(ArrayOfBytes, Index + 1) + ByteArrayToChar(ArrayOfBytes, Index + 2) + ByteArrayToChar(ArrayOfBytes, Index + 3);
 			if ("MTrk" == FullHeaderCheck) {
 				Index = Index + 4;
 				int32 ChunkLen = 0;
@@ -682,20 +708,36 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 				for (int j = 0; j < len; j++) {
 					Array[j] = ArrayOfBytes[Index + j];
 				}
-
-				//gets the length for this chink
-				ChunkLen = ByteArrayToInt(Array, true, true);
-
-				//offsets the index to go the the start of the chunk.
 				Index = Index + len;
 
-				TArray<uint8> ArrayOfBytes;
-				ArrayOfBytes.SetNum(ChunkLen);
-				for (int j = 0; j < ChunkLen; j++) {
-					ArrayOfBytes[j] = ArrayOfBytes[Index + j];
-				}
+				//gets the length for this chink
+				ChunkLen = ByteArrayToInt(Array, true, true) + 8;
 
-				MidiChunk.Chunks[i];
+				// does some offseting so "MTrk" is included.
+				Index = Index - 8;
+
+				//gets the chunk with a for loop. memcpy is definitly faster, but i dont know how to use it.
+				TArray<uint8> Bytes;
+				Bytes.SetNum(ChunkLen);
+				TArray<uint8> ChunkEndTest;
+				ChunkEndTest.SetNum(ChunkEnd.Num());
+
+				for (int j = 0; j < ChunkLen; j++) {
+					
+					systemMessages(ArrayOfBytes, MidiChunk, i, ChunkTrackName, Index + j);
+
+
+
+					ChunkEndTest = { ArrayOfBytes[Index + j - 2], ArrayOfBytes[Index + j - 1], ArrayOfBytes[Index + j] };
+					if (ChunkEnd == ChunkEndTest) {
+						Bytes.SetNum(j + 1);
+						break;
+					}
+					Bytes[j] = ArrayOfBytes[Index + j];
+				}
+				Index = Index + Bytes.Num();
+
+				MidiChunk.ChunkArray[i].Chunk = Bytes;
 			};
 		}
 	}
