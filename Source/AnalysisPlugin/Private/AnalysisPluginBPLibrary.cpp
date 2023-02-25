@@ -10,6 +10,14 @@
 #include "async/Async.h"
 #include "UObject/WeakObjectPtrTemplates.h"
 #include "UObject/UObjectGlobals.h"
+#include "GameFramework/Actor.h"
+#include <complex>
+#include <valarray>
+#include <cmath>
+
+//======================================================================================================================
+//											FFT Stuff
+//======================================================================================================================
 
 void UAnalysisPluginBPLibrary::CalculateFFT(const TArray<float> samples, const int32 NumChannels, const int32 SampleRate, TArray<float>& OutFrequencies, FString& Warnings)
 {
@@ -106,6 +114,7 @@ void UAnalysisPluginBPLibrary::CalculateFFT(const TArray<float> samples, const i
 	}
 }
 
+
 //allows you to clamp the range of the imput between 2 values
 float clampRange(const float Input, const float MaxVal, const float MinVal) {
 	return std::min(MaxVal, std::max(Input, MinVal));
@@ -157,7 +166,7 @@ void UAnalysisPluginBPLibrary::MakeSpectrogramColorArray(FSpectrogramInput Spect
 	UAudioAnalysisToolsLibrary* AudioAnalysisObject = SpectrogramValues.AudioAnalysisObject.Get();
 
 
-
+	FSpectrogramTextureType textureType = SpectrogramValues.TextureType;
 	int32 ThreadCount = SpectrogramValues.ThreadCount;
 	int32 SpectrogramSamples = SpectrogramValues.SpectrogramSamples;
 	int32 SpectrogramBands = SpectrogramValues.SpectrogramBands;
@@ -194,7 +203,6 @@ void UAnalysisPluginBPLibrary::MakeSpectrogramColorArray(FSpectrogramInput Spect
 	TArray<FColor> Pixels;
 
 	int32 whileLength = TextureWidth * TextureHeight;
-
 	for (int32 Chunkpart = firstIndex; Chunkpart <= lastIndex; Chunkpart++) {
 
 		int32 TriCounter = 0;
@@ -233,33 +241,279 @@ void UAnalysisPluginBPLibrary::MakeSpectrogramColorArray(FSpectrogramInput Spect
 
 		MainSpectrogram.SetNumZeroed(NumChannels * 4 * SpectrogramBands);
 
-		UAnalysisPluginBPLibrary::CalculateFFT(MainSpectrogram, NumChannels, SampleRate, MainSpectrogram, WarningOut);
+		switch (textureType) {
+			case Left: {	
 
-		int32 MainSpectrogramLen = MainSpectrogram.Num();
-		for (int32 FrequencyIndex = 0; FrequencyIndex < MainSpectrogramLen; FrequencyIndex++) {
+				int TempLength = MainSpectrogram.Num() / 2;
+				TArray<float> Channel = {};
 
-			if (FrequencyIndex >= BandsMin) {
-
-				if (FrequencyIndex <= BandsMax) {
-
-					float MainSpectrogramVal = clampRange(MainSpectrogram[FrequencyIndex], 10.f, 0.0f);
-
-					FColor CurrentPixel;
-					int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
-					CurrentPixel.R = colorVal;
-					CurrentPixel.G = colorVal;
-					CurrentPixel.B = colorVal;
-					CurrentPixel.A = 255;
-					Pixels.Add(CurrentPixel);
-
-				}
-				else {
-					break;
+				Channel.SetNumZeroed(TempLength);
+				for(int i = 0; i < TempLength; i++) {
+					Channel[i] = MainSpectrogram[i * 2];
 				}
 
+				MainSpectrogram = Channel;
+				UAnalysisPluginBPLibrary::CalculateFFT(MainSpectrogram, NumChannels, SampleRate, MainSpectrogram, WarningOut);
+
+				int32 MainSpectrogramLen = MainSpectrogram.Num();
+				for (int32 FrequencyIndex = 0; FrequencyIndex < MainSpectrogramLen; FrequencyIndex++) {
+
+					if (FrequencyIndex >= BandsMin) {
+
+						if (FrequencyIndex <= BandsMax) {
+
+							float MainSpectrogramVal = clampRange(MainSpectrogram[FrequencyIndex], 10.f, 0.0f);
+
+							FColor CurrentPixel;
+							int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
+							CurrentPixel.R = colorVal;
+							CurrentPixel.G = colorVal;
+							CurrentPixel.B = colorVal;
+							CurrentPixel.A = 255;
+							Pixels.Add(CurrentPixel);
+
+						}
+						else {
+							break;
+						}
+
+					}
+
+				}
+
+				break;
 			}
+			case Right: {
 
+				int TempLength = MainSpectrogram.Num() / 2;
+				TArray<float> Channel = {};
+
+				Channel.SetNumZeroed(TempLength);
+				for (int i = 0; i < TempLength; i++) {
+					Channel[i] = MainSpectrogram[(i * 2) + 1];
+				}
+
+				MainSpectrogram = Channel;
+				UAnalysisPluginBPLibrary::CalculateFFT(MainSpectrogram, NumChannels, SampleRate, MainSpectrogram, WarningOut);
+
+				int32 MainSpectrogramLen = MainSpectrogram.Num();
+				for (int32 FrequencyIndex = 0; FrequencyIndex < MainSpectrogramLen; FrequencyIndex++) {
+
+					if (FrequencyIndex >= BandsMin) {
+
+						if (FrequencyIndex <= BandsMax) {
+
+							float MainSpectrogramVal = clampRange(MainSpectrogram[FrequencyIndex], 10.f, 0.0f);
+
+							FColor CurrentPixel;
+							int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
+							CurrentPixel.R = colorVal;
+							CurrentPixel.G = colorVal;
+							CurrentPixel.B = colorVal;
+							CurrentPixel.A = 255;
+							Pixels.Add(CurrentPixel);
+
+						}
+						else {
+							break;
+						}
+
+					}
+
+				}
+
+				break;
+			}
+			case Combined: {
+
+				//the default behavior, so not much to do here
+				UAnalysisPluginBPLibrary::CalculateFFT(MainSpectrogram, NumChannels, SampleRate, MainSpectrogram, WarningOut);
+
+				int32 MainSpectrogramLen = MainSpectrogram.Num();
+				for (int32 FrequencyIndex = 0; FrequencyIndex < MainSpectrogramLen; FrequencyIndex++) {
+
+					if (FrequencyIndex >= BandsMin) {
+
+						if (FrequencyIndex <= BandsMax) {
+
+							float MainSpectrogramVal = clampRange(MainSpectrogram[FrequencyIndex], 10.f, 0.0f);
+
+							FColor CurrentPixel;
+							int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
+							CurrentPixel.R = colorVal;
+							CurrentPixel.G = colorVal;
+							CurrentPixel.B = colorVal;
+							CurrentPixel.A = 255;
+							Pixels.Add(CurrentPixel);
+
+						}
+						else {
+							break;
+						}
+
+					}
+
+				}
+
+				break;
+			}
+			case Separated: {
+
+				int TempLength = MainSpectrogram.Num() / 2;
+				TArray<float> ChannelLeft = {};
+
+				ChannelLeft.SetNumZeroed(TempLength);
+				for (int i = 0; i < TempLength; i++) {
+					ChannelLeft[i] = MainSpectrogram[i * 2];
+				}
+
+				ChannelLeft;
+				UAnalysisPluginBPLibrary::CalculateFFT(ChannelLeft, NumChannels, SampleRate, ChannelLeft, WarningOut);
+
+				int32 MainSpectrogramLen = ChannelLeft.Num();
+				for (int32 FrequencyIndex = 0; FrequencyIndex < MainSpectrogramLen; FrequencyIndex++) {
+
+					if (FrequencyIndex >= BandsMin) {
+
+						if (FrequencyIndex <= BandsMax) {
+
+							float MainSpectrogramVal = clampRange(ChannelLeft[FrequencyIndex], 10.f, 0.0f);
+
+							FColor CurrentPixel;
+							int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
+							CurrentPixel.R = colorVal;
+							CurrentPixel.G = colorVal;
+							CurrentPixel.B = colorVal;
+							CurrentPixel.A = 255;
+							Pixels.Add(CurrentPixel);
+
+						}
+						else {
+							break;
+						}
+
+					}
+
+				}
+
+				TArray<float> ChannelRight = {};
+
+				ChannelRight.SetNumZeroed(TempLength);
+				for (int i = 0; i < TempLength; i++) {
+					ChannelRight[i] = MainSpectrogram[(i * 2) + 1];
+				}
+
+				MainSpectrogram = ChannelRight;
+				UAnalysisPluginBPLibrary::CalculateFFT(ChannelRight, NumChannels, SampleRate, ChannelRight, WarningOut);
+
+				MainSpectrogramLen = ChannelRight.Num();
+				for (int32 FrequencyIndex = 0; FrequencyIndex < MainSpectrogramLen; FrequencyIndex++) {
+
+					if (FrequencyIndex >= BandsMin) {
+
+						if (FrequencyIndex <= BandsMax) {
+
+							float MainSpectrogramVal = clampRange(ChannelRight[FrequencyIndex], 10.f, 0.0f);
+
+							FColor CurrentPixel;
+							int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
+							CurrentPixel.R = colorVal;
+							CurrentPixel.G = colorVal;
+							CurrentPixel.B = colorVal;
+							CurrentPixel.A = 255;
+							Pixels.Add(CurrentPixel);
+
+						}
+						else {
+							break;
+						}
+
+					}
+
+				}
+
+				break;
+			}
+			case SeparatedFlipped: {
+
+				int TempLength = MainSpectrogram.Num() / 2;
+				TArray<float> ChannelRight = {};
+
+				ChannelRight.SetNumZeroed(TempLength);
+				for (int i = 0; i < TempLength; i++) {
+					ChannelRight[i] = MainSpectrogram[(i * 2) + 1];
+				}
+
+				ChannelRight;
+				UAnalysisPluginBPLibrary::CalculateFFT(ChannelRight, NumChannels, SampleRate, ChannelRight, WarningOut);
+
+				int32 MainSpectrogramLen = ChannelRight.Num();
+				for (int32 FrequencyIndex = 0; FrequencyIndex < MainSpectrogramLen; FrequencyIndex++) {
+
+					if (FrequencyIndex >= BandsMin) {
+
+						if (FrequencyIndex <= BandsMax) {
+
+							float MainSpectrogramVal = clampRange(ChannelRight[FrequencyIndex], 10.f, 0.0f);
+
+							FColor CurrentPixel;
+							int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
+							CurrentPixel.R = colorVal;
+							CurrentPixel.G = colorVal;
+							CurrentPixel.B = colorVal;
+							CurrentPixel.A = 255;
+							Pixels.Add(CurrentPixel);
+
+						}
+						else {
+							break;
+						}
+
+					}
+
+				}
+
+				TArray<float> ChannelLeft = {};
+
+				ChannelLeft.SetNumZeroed(TempLength);
+				for (int i = 0; i < TempLength; i++) {
+					ChannelLeft[i] = MainSpectrogram[i * 2];
+				}
+
+				MainSpectrogram = ChannelLeft;
+				UAnalysisPluginBPLibrary::CalculateFFT(ChannelLeft, NumChannels, SampleRate, ChannelLeft, WarningOut);
+
+				MainSpectrogramLen = ChannelLeft.Num();
+				for (int32 FrequencyIndex = 0; FrequencyIndex < MainSpectrogramLen; FrequencyIndex++) {
+
+					if (FrequencyIndex >= BandsMin) {
+
+						if (FrequencyIndex <= BandsMax) {
+
+							float MainSpectrogramVal = clampRange(ChannelLeft[FrequencyIndex], 10.f, 0.0f);
+
+							FColor CurrentPixel;
+							int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
+							CurrentPixel.R = colorVal;
+							CurrentPixel.G = colorVal;
+							CurrentPixel.B = colorVal;
+							CurrentPixel.A = 255;
+							Pixels.Add(CurrentPixel);
+
+						}
+						else {
+							break;
+						}
+
+					}
+
+				}
+
+				break;
+			}
 		}
+
+		//the make pixel stuff goes here
 
 		BandsGenerated = BandsMax * (Chunkpart - (SpectrogramSamples * ThreadLocation));
 
@@ -509,7 +763,9 @@ void UAnalysisPluginBPLibrary::CalculateSpectrogramAsync(UAnalysisPluginBPLibrar
 			});
 		}
 		break;
+
 	}
+
 }
 
 void UAnalysisPluginBPLibrary::DoneCalculating_Internal(FSpectrogramOutput output, UAnalysisPluginBPLibrary* Ref)
@@ -540,6 +796,119 @@ void UAnalysisPluginBPLibrary::DoneCalculating_Internal(FSpectrogramOutput outpu
 
 }
 
+//======================================================================================================================
+//											Sorting Stuff
+//======================================================================================================================
+
+//helper function to get the specific transfrom type requested.
+//float getTransform(AActor* ActorRef, FActorTransform SortingAxis) {
+//	switch (SortingAxis) {
+//		case LocationX:
+//		{
+//			return ActorRef->GetActorLocation().X;
+//		}
+//		case LocationY:
+//		{
+//			return ActorRef->GetActorLocation().Y;
+//		}
+//		case LocationZ:
+//		{
+//			return ActorRef->GetActorLocation().Z;
+//		}
+//		case RotationX:
+//		{
+//			return ActorRef->GetActorRotation().Vector().X;
+//		}
+//		case RotationY:
+//		{
+//			return ActorRef->GetActorRotation().Vector().Y;
+//		}
+//		case RotationZ:
+//		{
+//			return ActorRef->GetActorRotation().Vector().Z;
+//		}
+//		case ScaleX:
+//		{
+//			return ActorRef->GetActorScale().X;
+//		}
+//		case ScaleY:
+//		{
+//			return ActorRef->GetActorScale().Y;
+//		}
+//		case ScaleZ:
+//		{
+//			return ActorRef->GetActorScale().Z;
+//		}
+//	}
+//	return 0.0;
+//}
+//
+//int64 GetDigitAtColumn(int64 num, int32 column) {
+//	int64 DigitAtColumn = floorl(long double(num) / powl(10, double(column)));
+//	return DigitAtColumn - floorl((long double(DigitAtColumn) * 0.1)) * 10;
+//}
+//
+//TArray<AActor*> UAnalysisPluginBPLibrary::RadixSortActorsTransform(TArray<AActor*> ActorArray, FActorTransform SortingAxis, int64 accuracy)
+//{
+//	TArray<AActor*> RadixActorArray = ActorArray;
+//	TArray<AActor*> TempActorArray = ActorArray;
+//	int DigitLength = 1;
+//	
+//	int32 TotalItems = RadixActorArray.Num();
+//	long double HighestVal = 0.0;
+//	double transform = 0.0;
+//
+//	//find the highest value
+//	for (int32 i = 0; i < TotalItems; i++) {
+//
+//		transform = getTransform(RadixActorArray[i], SortingAxis);
+//		if (transform > HighestVal) {
+//			HighestVal = transform;
+//		}
+//	}
+//
+//	HighestVal = HighestVal * accuracy;
+//
+//	//find how many digits the value is
+//	while (HighestVal > 1.0) {
+//		HighestVal = HighestVal * 0.1;
+//		DigitLength++;
+//	}
+//	
+//	//the main for loop
+//	TArray<int32> RadixSortCounter;
+//	for (int ForLoop = 0; ForLoop <= DigitLength; ForLoop++) {
+//		RadixSortCounter.Empty();
+//		RadixSortCounter.SetNum(10);
+//
+//		//find how many of each digit.
+//		for (int32 j = 0; j < TotalItems; j++) {
+//			transform = getTransform(RadixActorArray[j], SortingAxis) * accuracy;
+//			RadixSortCounter[GetDigitAtColumn(int64(transform), ForLoop)] = RadixSortCounter[GetDigitAtColumn(int64(transform), ForLoop)]++;
+//		}
+//
+//		// cant remember what this does, but something important im sure
+//		for (int index = 1; index <= 9; index++) {
+//			RadixSortCounter[index] = RadixSortCounter[index] + RadixSortCounter[index - 1];
+//		}
+//
+//		//the for loop for sorting each digit into its bins
+//		for (int32 i = 0; i < TotalItems; i++) {
+//
+//			transform = getTransform(RadixActorArray[i], SortingAxis);
+//			RadixSortCounter[GetDigitAtColumn(int64(transform), ForLoop)] = RadixSortCounter[GetDigitAtColumn(int64(transform), ForLoop)]--;
+//			int32 arrayindex = RadixSortCounter[GetDigitAtColumn(int64(transform), ForLoop)];
+//			TempActorArray[arrayindex] = RadixActorArray[i];
+//		}
+//		RadixActorArray = TempActorArray;
+//	}
+//
+//	return RadixActorArray;
+//}
+
+//======================================================================================================================
+//											Midi Stuff
+//======================================================================================================================
 
 void UAnalysisPluginBPLibrary::ImportBinaryFromDisk(FString Path, TArray<uint8>& ArrayOfBytes, FString& ErrorLog)
 {
@@ -560,38 +929,206 @@ int64 UAnalysisPluginBPLibrary::ByteArrayToInt(const TArray<uint8> ArrayOfBytes,
 	if (ArrayOfBytes.Num() == 0) {
 		return 0;
 	}
+
 	TArray<uint8> Bytes = ArrayOfBytes;
-	if (ArrayOfBytes.Num() > 8) {
+	if (Bytes.Num() > 8) {
 		Bytes.SetNum(8, true);
 	}
 	
-	uint64 num = 0;
+	int64 num = 0;
 	int32 len = Bytes.Num() - 1;
 	if (BigEndian == false) {
 		Algo::Reverse(Bytes);
 	}
 
 	for (int32 i = 0; i <= len; i++) {
-		num = num + (Bytes[i] * pow(256, len - i));
+		num += (Bytes[i] * pow(256, len - i));
 	}
 
-	if (Signed == false) {
-		num = num - pow(2,63);
+	if (Signed == true) {
+		if (num >= pow(2, (Bytes.Num() * 8) - 1)) {
+			num -= pow(2, Bytes.Num() * 8);
+		}
+
 	}
 	return int64(num);
 }
 
-FString UAnalysisPluginBPLibrary::ByteArrayToChar(TArray<uint8> ArrayOfBytes, int32 Index)
+FString UAnalysisPluginBPLibrary::ByteToChar(uint8 Byte)
 {
-	int32 length = ArrayOfBytes.Num() - 1;
-	if (Index > length) {
-		return "";
-	}
-	FString Char;
-
-	Char = ",";
-	Char[0] = char(ArrayOfBytes[Index]);
+	FString Char = " ";
+	Char[0] = char(Byte);
 	return Char;
+}
+
+bool UAnalysisPluginBPLibrary::IsValidChar(const uint8 Byte, bool CheckIfChar, bool CheckIfInt, bool CheckIfCommonSpecialCharacter, bool CheckIfUncommonSpecialCharacter, TArray<FString> AdditionalCharacters)
+{
+
+	FString Char = ByteToChar(Byte);
+	char ch = Char[0];
+
+	if (CheckIfChar && ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')))
+	{
+		return true;
+	}
+
+	if (CheckIfInt && (ch >= '0' && ch <= '9'))
+	{
+		return true;
+	}
+
+	//if theres an easier way to do this, let me know. for now, the brute force way.
+	if (CheckIfCommonSpecialCharacter) {
+		switch (ch) {
+			case '!':
+			{
+				return true;
+			}
+			case '&':
+			{
+				return true;
+			}
+			case '(':
+			{
+				return true;
+			}
+			case ')':
+			{
+				return true;
+			}
+			case '-':
+			{
+				return true;
+			}
+			case '_':
+			{
+				return true;
+			}
+			case '|':
+			{
+				return true;
+			}
+			case ';':
+			{
+				return true;
+			}
+			case ':':
+			{
+				return true;
+			}
+			case '\'':
+			{
+				return true;
+			}
+			case '"':
+			{
+				return true;
+			}
+			case ',':
+			{
+				return true;
+			}
+			case '.':
+			{
+				return true;
+			}
+			case '/':
+			{
+				return true;
+			}
+			case '?':
+			{
+				return true;
+			}
+			case ' ':
+			{
+				return true;
+			}
+		}
+	}
+
+	if (CheckIfUncommonSpecialCharacter) {
+		switch (ch) {
+			case '`':
+			{
+				return true;
+			}
+			case '~':
+			{
+				return true;
+			}
+			case '@':
+			{
+				return true;
+			}
+			case '#':
+			{
+				return true;
+			}
+			case '$':
+			{
+				return true;
+			}
+			case '%':
+			{
+				return true;
+			}
+			case '^':
+			{
+				return true;
+			}
+			case '*':
+			{
+				return true;
+			}
+			case '=':
+			{
+				return true;
+			}
+			case '+':
+			{
+				return true;
+			}
+			case '[':
+			{
+				return true;
+			}
+			case '{':
+			{
+				return true;
+			}
+			case ']':
+			{
+				return true;
+			}
+			case '}':
+			{
+				return true;
+			}
+			case '\\':
+			{
+				return true;
+			}
+			case '<':
+			{
+				return true;
+			}
+			case '>':
+			{
+				return true;
+			}
+		}
+	}
+
+	if (AdditionalCharacters.Num() > 0) {
+		for (int i = 0; i < AdditionalCharacters.Num(); i++) {
+			if (AdditionalCharacters[i][0] == ch) {
+				return true;
+				break;
+			}
+		}
+	}
+	return false;
 }
 
 void systemMessages(TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk, int32 i, TArray<uint8> param1, int32 offset) {
@@ -603,7 +1140,7 @@ void systemMessages(TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk, int32 i,
 		int32 Len = ArrayOfBytes[offset + 1];
 		FString name;
 		for (int i = 0; i < Len; i++) {
-			name = name + UAnalysisPluginBPLibrary::ByteArrayToChar(ArrayOfBytes, offset + 2 + i);
+			name = name + UAnalysisPluginBPLibrary::ByteToChar(ArrayOfBytes[offset + 2 + i]);
 		}
 		MidiChunk.ChunkArray[i].Name = name;
 	}
@@ -618,13 +1155,13 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 	for (int32 i = Index; i < length; i++) {
 		FString Char;
 		Char = ",";
-		Char = ByteArrayToChar(ArrayOfBytes, i);
+		Char = ByteToChar(ArrayOfBytes[i]);
 
 		//initial check for if its a midi header.
 		if (Char == "M") {
-			
+
 			//actual check for initial midi header. Should be right at the beginning of the file, but, yah know, never can be sure.
-			FString FullHeaderCheck = ByteArrayToChar(ArrayOfBytes, i) + ByteArrayToChar(ArrayOfBytes, i + 1) + ByteArrayToChar(ArrayOfBytes, i + 2) + ByteArrayToChar(ArrayOfBytes, i + 3);
+			FString FullHeaderCheck = ByteToChar(ArrayOfBytes[i]) + ByteToChar(ArrayOfBytes[i + 1]) + ByteToChar(ArrayOfBytes[i + 2]) + ByteToChar(ArrayOfBytes[i + 3]);
 			if ("MThd" == FullHeaderCheck) {
 				i = i + 4;
 				int32 headerLen = 0;
@@ -635,38 +1172,53 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 				for (int j = 0; j < len; j++) {
 					Array[j] = ArrayOfBytes[i + j];
 				}
-				headerLen = ByteArrayToInt(Array, true, true);
+				headerLen = ByteArrayToInt(Array, true, false);
 				i = i + len;
+
+				//Header Offset
+				int hO = i;
 
 				//midi type. should be a direct conversion. not sure why its 16 bits long when 8 bits would have been fine, but it is.
 				len = 2;
 				Array.SetNum(len);
 				for (int j = 0; j < len; j++) {
-					Array[j] = ArrayOfBytes[i + j];
+					Array[j] = ArrayOfBytes[hO + j];
 				}
-				MidiChunk.Format = FMidiFormat(ByteArrayToInt(Array, true, true));
-				i = i + len;
+				MidiChunk.Format = FMidiFormat(ByteArrayToInt(Array, true, false));
+				hO += len;
 
 				//how many midi tracks this file contains
 				len = 2;
 				Array.SetNum(len);
 				for (int j = 0; j < len; j++) {
-					Array[j] = ArrayOfBytes[i + j];
+					Array[j] = ArrayOfBytes[hO + j];
 				}
-				MidiChunk.TrackCount = ByteArrayToInt(Array, true, true);
-				i = i + len;
+				MidiChunk.TrackCount = ByteArrayToInt(Array, true, false);
+				hO += len;
 
 				//expected values are 192, 128, 96 or something.
 				len = 2;
 				Array.SetNum(len);
-				for (int j = 0; j < len; j++) {
-					Array[j] = ArrayOfBytes[i + j];
+
+				if (ArrayOfBytes[hO] <= 127) {
+					//this is ticks
+					for (int j = 0; j < len; j++) {
+						Array[j] = ArrayOfBytes[hO + j];
+					}
+					MidiChunk.Division = ByteArrayToInt(Array, true, false);
+					MidiChunk.DivisionType = Ticks;
+
+				} else {
+					//this is SMTPE frames
+					//left byte is converted to signed (should be a value like -24, -25, -29, or -30) then is converted to positive and multiplied by the ticks per frame value.
+					//25 * 40 for example gives the value of 1ms per tick
+
+					MidiChunk.Division = (int8(ArrayOfBytes[hO]) * -1) * ArrayOfBytes[hO];
+					MidiChunk.DivisionType = SMTPEframes;
 				}
-				MidiChunk.TimeDivision = ByteArrayToInt(Array, true, true);
-				i = i + len;
 
 				//just to be sure the location we are going to is the next header
-				Index = i - 6 + headerLen;
+				Index = i + headerLen;
 
 				break;
 			};
@@ -675,7 +1227,7 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 
 	MidiChunk.ChunkArray.SetNum(MidiChunk.TrackCount);
 
-	//system exclusive events. each one should be self explanitory. used this for refernce. scroll down to events http://midi.mathewvp.com/aboutMidi.htm
+	//system exclusive events. each one should be self explanitory. used this for refernce. scroll down to events http://midi.mathewvp.com/aboutMidi.html or http://personal.kent.edu/~sbirch/Music_Production/MP-II/MIDI/midi_file_format.htm
 	TArray<uint8> ChunkEnd = { 255, 47, 0 };
 
 	TArray<uint8> ChunkText = { 255, 1 };
@@ -686,59 +1238,30 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 	TArray<uint8> ChunkMarker = { 255, 6 };
 	TArray<uint8> ChunkCuePoint = { 255, 7 };
 
+	int ChunkIndex = -1;
+
 	//now getting each chunk. 
-	for (int32 i = 0; i < MidiChunk.TrackCount; i++) {
+	for (int32 i = Index; i < ArrayOfBytes.Num(); i++) {
 		FString Char;
 		Char = ",";
-		Char = ByteArrayToChar(ArrayOfBytes, Index);
+		Char = ByteToChar(ArrayOfBytes[i]);
 
 		//initial check for if its a midi header.
 		if (Char == "M") {
 			
 			//gets this chunk.
-			FString FullHeaderCheck = ByteArrayToChar(ArrayOfBytes, Index) + ByteArrayToChar(ArrayOfBytes, Index + 1) + ByteArrayToChar(ArrayOfBytes, Index + 2) + ByteArrayToChar(ArrayOfBytes, Index + 3);
+			FString FullHeaderCheck = ByteToChar(ArrayOfBytes[i]) + ByteToChar(ArrayOfBytes[i + 1]) + ByteToChar(ArrayOfBytes[i + 2]) + ByteToChar(ArrayOfBytes[i + 3]);
 			if ("MTrk" == FullHeaderCheck) {
-				Index = Index + 4;
-				int32 ChunkLen = 0;
-				TArray<uint8> Array;
 
-				//gets the byte length of this chunk.
-				int len = 4;
-				Array.SetNum(len);
-				for (int j = 0; j < len; j++) {
-					Array[j] = ArrayOfBytes[Index + j];
-				}
-				Index = Index + len;
-
-				//gets the length for this chink
-				ChunkLen = ByteArrayToInt(Array, true, true) + 8;
-
-				// does some offseting so "MTrk" is included.
-				Index = Index - 8;
-
-				//gets the chunk with a for loop. memcpy is definitly faster, but i dont know how to use it.
-				TArray<uint8> Bytes;
-				Bytes.SetNum(ChunkLen);
-				TArray<uint8> ChunkEndTest;
-				ChunkEndTest.SetNum(ChunkEnd.Num());
-
-				for (int j = 0; j < ChunkLen; j++) {
-					
-					systemMessages(ArrayOfBytes, MidiChunk, i, ChunkTrackName, Index + j);
-
-
-
-					ChunkEndTest = { ArrayOfBytes[Index + j - 2], ArrayOfBytes[Index + j - 1], ArrayOfBytes[Index + j] };
-					if (ChunkEnd == ChunkEndTest) {
-						Bytes.SetNum(j + 1);
-						break;
-					}
-					Bytes[j] = ArrayOfBytes[Index + j];
-				}
-				Index = Index + Bytes.Num();
-
-				MidiChunk.ChunkArray[i].Chunk = Bytes;
+				ChunkIndex++;
 			};
 		}
+
+		//checking if the cunks are valid.
+		if (ChunkIndex < MidiChunk.TrackCount) {
+
+			MidiChunk.ChunkArray[ChunkIndex].MIDI.Add(ArrayOfBytes[i]);
+		}
+		
 	}
 }

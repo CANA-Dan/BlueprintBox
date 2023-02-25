@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AudioAnalysisToolsLibrary.h"
 #include "UObject/WeakObjectPtrTemplates.h"
+#include "GameFramework/Actor.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "AnalysisPluginBPLibrary.generated.h"
 
@@ -22,14 +23,18 @@ enum FGenerationStatus
 };
 
 UENUM(BlueprintType)
-enum FSpectrogramBandType
+enum FSpectrogramTextureType
 {
+	Left				UMETA(DisplayName = "Left", ToolTip = "Provides the left audio only"),
 
-	Left			UMETA(DisplayName = "Left Audio", ToolTip = "Provides the left audio only"),
+	Right				UMETA(DisplayName = "Right", ToolTip = "Provides the right audio only"),
 
-	Right			UMETA(DisplayName = "Right Audio", ToolTip = "Provides the right audio only"),
+	Combined			UMETA(DisplayName = "Combined", ToolTip = "Merges both left and right into a single texture"),
 
-	Combined		UMETA(DisplayName = "Left and Right Combined", ToolTip = "Merges both left and right into a single texture"),
+	Separated			UMETA(DisplayName = "Separated", ToolTip = "Gives the left and right channels as seperated texture parts"),
+
+	SeparatedFlipped	UMETA(DisplayName = "SeparatedFlipped", ToolTip = "Same as seperated but the channels are flipped")
+
 };
 
 UENUM(BlueprintType)
@@ -39,6 +44,32 @@ enum FGenerationType
 	Waveform		UMETA(DisplayName = "Waveform"),
 
 	Spectrogram		UMETA(DisplayName = "Spectrogram"),
+
+	SudoWavelet		UMETA(DisplayName = "Sudo-Wavelet"),
+
+};
+
+UENUM(BlueprintType)
+enum FActorTransform
+{
+
+	LocationX		UMETA(DisplayName = "Location X"),
+
+	LocationY		UMETA(DisplayName = "Location Y"),
+
+	LocationZ		UMETA(DisplayName = "Location Z"),
+
+	RotationX		UMETA(DisplayName = "Rotation X"),
+
+	RotationY		UMETA(DisplayName = "Rotation Y"),
+
+	RotationZ		UMETA(DisplayName = "Rotation Z"),
+
+	ScaleX			UMETA(DisplayName = "Scale X"),
+
+	ScaleY			UMETA(DisplayName = "Scale Y"),
+
+	ScaleZ			UMETA(DisplayName = "Scale Z"),
 
 };
 
@@ -71,6 +102,17 @@ enum FMidiFormat
 	Simultanious	UMETA(DisplayName = "Multi Track Simultanious"),
 
 	Sequence		UMETA(DisplayName = "Multi Track Sequentual"),
+
+
+};
+
+UENUM(BlueprintType)
+enum FMidiDivision
+{
+
+	Ticks			UMETA(DisplayName = "Ticks"),
+
+	SMTPEframes		UMETA(DisplayName = "SMTPE Frames"),
 
 };
 
@@ -106,6 +148,10 @@ struct FSpectrogramInput
 		//defines how many bands you wish to chop from the high frequencies of the texture, as a float from 0 to 1. set to 1 to include everything from 1 down.
 		UPROPERTY(BlueprintReadWrite)
 		float BandsMax;
+
+		//Allows you to specify how you want the channels returned.
+		UPROPERTY(BlueprintReadWrite)
+		TEnumAsByte<FSpectrogramTextureType> TextureType;
 };
 
 //Input nodes for the waveform. Allows you to simplify your setup when it comes to making a thread pool.
@@ -168,16 +214,31 @@ struct FSpectrogramTextures
 };
 
 USTRUCT(BlueprintType)
+struct FMidiBPMChanges
+{
+	GENERATED_BODY()
+
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The Bpm"))
+		float BPM;
+
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The Time the bpm change occures"))
+		float Time;
+
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The Time the bpm change occures"))
+		float TimeSignature;
+
+};
+
+USTRUCT(BlueprintType)
 struct FMidiChunk
 {
 	GENERATED_BODY()
 
-		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "A single chunk. This includes everything inside the chunk, as well as the chunk header (MTrk)"))
-		TArray<uint8> Chunk;
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "all the midi binary, including the header and end"))
+		TArray<uint8> MIDI;
 
 		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The chunk name for convience sake"))
 		FString Name;
-
 };
 
 USTRUCT(BlueprintType)
@@ -190,11 +251,14 @@ struct FMidiStruct
 
 		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "How many midi tracks are in this midi file."))
 		int32 TrackCount;
-		
-		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "what time time signature the notes will be on."))
-		int32 TimeDivision;
 
-		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The array containing all your MIDI chunks"))
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The Type of midi track this is"))
+		TEnumAsByte<FMidiDivision> DivisionType;
+
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "How many midi tracks are in this midi file."))
+		int32 Division;
+
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The array containing all your MIDI chunks in binary, including MThd"))
 		TArray<FMidiChunk> ChunkArray;
 
 };
@@ -210,6 +274,10 @@ class UAnalysisPluginBPLibrary : public UBlueprintFunctionLibrary
 
 public:
 	
+	//======================================================================================================================
+	//											FFT Stuff
+	//======================================================================================================================
+
 	UPROPERTY(BlueprintAssignable, Category = "Analysis Plugin | Audio Analysis")
 		FGeneratedTextures DoneCalculating;
 	
@@ -233,7 +301,7 @@ public:
 	//@param ThreadId - Allows you to give the thread calculation offset so that chunks can be generated correctly. Set 0 for a single thread.
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | Audio Analysis", DisplayName = "(Internal) Make Spectrogram Color Array")
 		static void MakeSpectrogramColorArray(FSpectrogramInput SpectrogramValues, const int32 ChunkIndex, const int32 ThreadId, TEnumAsByte<FGenerationStatus>& ContinueLooping, TArray<FColor>& color);
-
+	
 	///Generates an array of pixels (one second per chunk). Intended to be turned into a texture. Used internaly for "Calculate Spectrogram Async", but avalible to the user in blueprints.
 	//@param WaveformValues - Input nodes for the waveform. Allows you to simplify your setup when it comes to making a thread pool. Best to leave these as constant values once the waveform is generating.
 	//@param ChunkIndex - What index you wish to calculate and generate. This variable should be thread specific.
@@ -254,26 +322,48 @@ public:
 	//@param ThreadId - Allows you to give the thread calculation offset so that chunks can be generated correctly.
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | Audio Analysis", DisplayName = "Calculate Spectrogram Async")
 		static void CalculateSpectrogramAsync(UAnalysisPluginBPLibrary* AnalysisPluginRef, FGenerationType type, FWaveformInput WaveformInput, FSpectrogramInput SpectrogramInput, int32 ChunkIndex, int32 ThreadID);
+	
+	//======================================================================================================================
+	//											Sorting Stuff
+	//======================================================================================================================
+
+	//This uses an inefficient radix sorting algorithm to sort actors on any transform. Inefficient because I made it from scratch, but still way faster than the base sort function in C++.
+	//@param SortingAxis - what axis you want to sort by. will only sort positive value for now.
+	//@param AnalysisPluginRef - because transforms are floats, this allows you to dial in how accurate deep the radix sorter goes. low values will be faster. Use a value like 100 to go down to 0.01 in accuracy.
+	//UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | Sorting", DisplayName = "Radix Sort Actors Transform")
+		//static TArray<AActor*> RadixSortActorsTransform(TArray<AActor*> ActorArray, FActorTransform SortingAxis, int64 accuracy);
+
+	//======================================================================================================================
+	//											MIDI Styff
+	//======================================================================================================================
 
 	//Used for importing MIDI, but can be used to import any binary file in theory.
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "Import MIDI/Binary From Disk")
 		static void ImportBinaryFromDisk(FString Path, TArray<uint8>& ArrayOfBytes, FString& ErrorLog);
 
 	//Allows you to convert an array of bytes into its higher value int counterparts.
-	//If you want something like a 16 bit int, then give only 2 bytes. Bytes more than index 7 will be ignored.
+	//If you want something like a 16 bit int, then give only 2 bytes. intended to be used up to 56 bit numbers)
 	//@param BigEndian - BigEndian is also known as motorola format. Reads the bytes from left to right. Set false to read bytes from right to left (intel format/LittleEndian).
-	//@param Signed - Allows you to specifiy if you want the value signed or not. Signed means the value returned will always be positive, but only go upto 2^63. Unsigned means that any value lower than 2^63 will always be negitive, but you get all 64 bits accessable to you. If you dont know what you are doing, set this to true.
+	//@param Signed - Allows you to specifiy if you want the value signed or not. Unsigned means the value returned will always be positive. Signed means that values will overflow properly. If you dont know what you are doing, leave this as false.
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Byte Array To Int")
 		static int64 ByteArrayToInt(TArray<uint8> ArrayOfBytes, bool BigEndian, bool Signed);
 
 	//Converts a byte into a char. Used to find MIDI Chunk headers, but usable for general binary files.
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Byte Array To Char")
-		static FString ByteArrayToChar(TArray<uint8> ArrayOfBytes, int32 Index);
+		static FString ByteToChar(uint8 Byte);
+
+	//This function will tell you if something is a character or not. its used for the "Provide Midi Chunk" function, but is avalible to the user in blueprints.
+	//@param CheckIfChar - This will check if the byte is any character from "A" to "Z", both upper and lower case.
+	//@param CheckIfInt - This will check for any number between 0 and 9.
+	//@param CheckIfCommonSpecialCharacter - This will check for all these special characters ! & ( ) - _  ; : ' " , . / ? as well as the space character.
+	//@param CheckIfUncommonSpecialCharacter - This will check for all these special characters ` ~ # % ^ * = + [ { ] } \ | < > as well as the "At" symbol (the one used in emails). Blueprints wont show it because of formating.
+	//@param additionalCharacters - Any characters you wish to check for specifically that the options above dont cover. If you dont wish to check for anything, make an array without any pins.
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Is Valid Character")
+		static bool IsValidChar(const uint8 Byte, bool CheckIfChar, bool CheckIfInt, bool CheckIfCommonSpecialCharacter, bool CheckIfUncommonSpecialCharacter, TArray<FString> AdditionalCharacters);
 
 	//Finds and provides header data
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Provide Midi Chunks")
 		static void ProvideMidiChunks(const TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk);
-
 
 protected:
 
