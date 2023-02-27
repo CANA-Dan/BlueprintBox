@@ -15,6 +15,5 @@ public class AnalysisPlugin : ModuleRules
 
 		AddEngineThirdPartyPrivateStaticDependencies(Target, "Kiss_FFT");
 
-		//PrivateIncludePaths.AddRange( new string[] { "AnalysisPlugin/ThirdParty/midifile/include"))});
 	}
 }

@@ -220,7 +220,7 @@ void UAnalysisPluginBPLibrary::MakeSpectrogramColorArray(FSpectrogramInput Spect
 
 		//checking if the location to get is less than the imported sound length
 		if (EndTime <= SongLength) {
-			AudioAnalysisObject->GetAudioFrameFromSoundWaveByTimeCustom(ImportedSoundWave, StartTime, EndTime, MainSpectrogram);
+			AudioAnalysisObject->GetAudioByTimeRange(ImportedSoundWave, StartTime, EndTime, MainSpectrogram);
 		}
 		else {
 
@@ -582,7 +582,7 @@ void UAnalysisPluginBPLibrary::MakeWaveformColorArray(FWaveformInput WaveformVal
 		//now to check if the time is still valid. if its not, the waveform will end cleanly
 		if (endTime < songLength) {
 
-			AudioAnalysisObject->GetAudioFrameFromSoundWaveByTimeCustom(ImportedSoundWave, startTime, endTime, AudioFrame);
+			AudioAnalysisObject->GetAudioByTimeRange(ImportedSoundWave, startTime, endTime, AudioFrame);
 
 			TempPixels = CleanPixels;
 
@@ -1142,7 +1142,7 @@ void systemMessages(TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk, int32 i,
 		for (int i = 0; i < Len; i++) {
 			name = name + UAnalysisPluginBPLibrary::ByteToChar(ArrayOfBytes[offset + 2 + i]);
 		}
-		MidiChunk.ChunkArray[i].Name = name;
+		MidiChunk.ChunkArray[i];
 	}
 }
 
@@ -1252,16 +1252,20 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 			//gets this chunk.
 			FString FullHeaderCheck = ByteToChar(ArrayOfBytes[i]) + ByteToChar(ArrayOfBytes[i + 1]) + ByteToChar(ArrayOfBytes[i + 2]) + ByteToChar(ArrayOfBytes[i + 3]);
 			if ("MTrk" == FullHeaderCheck) {
-
 				ChunkIndex++;
 			};
 		}
 
-		//checking if the cunks are valid.
+		//checking if the chunks index is valid.
 		if (ChunkIndex < MidiChunk.TrackCount) {
 
-			MidiChunk.ChunkArray[ChunkIndex].MIDI.Add(ArrayOfBytes[i]);
+			MidiChunk.ChunkArray[ChunkIndex].MIDIBinary.Add(ArrayOfBytes[i]);
 		}
 		
 	}
 }
+
+void UAnalysisPluginBPLibrary::GetNotes(const TArray<uint8> ArrayOfBytes, FMidiNote& MidiNotes)
+{
+}
+

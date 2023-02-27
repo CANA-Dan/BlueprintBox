@@ -74,26 +74,6 @@ enum FActorTransform
 };
 
 UENUM(BlueprintType)
-enum FMidiNoteType
-{
-
-	NoteOff			UMETA(DisplayName = "Note Off"),
-
-	NoteOn			UMETA(DisplayName = "Note On"),
-
-	Aftertouch		UMETA(DisplayName = "AfterTouch"),
-
-	PatchChange		UMETA(DisplayName = "Patch Change"),
-
-	ChannelPressure UMETA(DisplayName = "ChannelPressure"),
-
-	PitchBend		UMETA(DisplayName = "PitchBend"),
-
-	SystemMessage	UMETA(DisplayName = "non-musical command"),
-
-};
-
-UENUM(BlueprintType)
 enum FMidiFormat
 {
 
@@ -116,6 +96,68 @@ enum FMidiDivision
 
 };
 
+UENUM(BlueprintType)
+enum FMidiNoteType
+{
+
+	NoteOff			UMETA(DisplayName = "Note Off"),
+
+	NoteOn			UMETA(DisplayName = "Note On"),
+
+	AfterTouch		UMETA(DisplayName = "Key Pressure (Aftertouch)"),
+
+	ControlChange	UMETA(DisplayName = "Control Change"),
+
+	ProgramChange	UMETA(DisplayName = "Program Change"),
+
+	ChannelPressure	UMETA(DisplayName = "Channel Pressure (Aftertouch)"),
+
+	PitchWheel		UMETA(DisplayName = "Pitch Wheel Change"),
+
+	channelMode		UMETA(DisplayName = "Channel Mode Messages"),
+};
+
+UENUM(BlueprintType)
+enum FMidiSysCommonMessages
+{
+
+	SysEx			UMETA(DisplayName = "System Exclusive (F0)"),
+
+	UndfOne			UMETA(DisplayName = "Undefined 1 (F1)"),
+
+	SongPosPtr		UMETA(DisplayName = "Song Position Pointer (F2)"),
+
+	SongSelect		UMETA(DisplayName = "Song Select (F3)"),
+
+	UndfTwo			UMETA(DisplayName = "Undefined 2 (F4)"),
+
+	UndfThree		UMETA(DisplayName = "Undefined 3 (F5)"),
+
+	TuneRequest		UMETA(DisplayName = "Tune Request (F6)"),
+
+	EndOfSysEx		UMETA(DisplayName = "End of Exclusive (F7)"),
+};
+
+UENUM(BlueprintType)
+enum FMidiSysRealTimeMessages
+{
+
+	TimingClock		UMETA(DisplayName = "Timing Clock (F8)"),
+
+	UndfFour		UMETA(DisplayName = "Undefined 4 (F9)"),
+
+	Start			UMETA(DisplayName = "Start (FA)"),
+
+	Continue		UMETA(DisplayName = "Continue (FB)"),
+
+	Stop			UMETA(DisplayName = "Stop (FC)"),
+
+	UndfFive		UMETA(DisplayName = "Undefined 5 (FD)"),
+
+	ActiveSensing	UMETA(DisplayName = "Active Sensing (FE)"),
+
+	Reset			UMETA(DisplayName = "Reset (FF)"),
+};
 
 //Input nodes for the fft. Allows you to simplify your setup when it comes to making a thread pool.
 USTRUCT(BlueprintType)
@@ -213,21 +255,6 @@ struct FSpectrogramTextures
 
 };
 
-USTRUCT(BlueprintType)
-struct FMidiBPMChanges
-{
-	GENERATED_BODY()
-
-		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The Bpm"))
-		float BPM;
-
-		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The Time the bpm change occures"))
-		float Time;
-
-		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The Time the bpm change occures"))
-		float TimeSignature;
-
-};
 
 USTRUCT(BlueprintType)
 struct FMidiChunk
@@ -235,10 +262,7 @@ struct FMidiChunk
 	GENERATED_BODY()
 
 		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "all the midi binary, including the header and end"))
-		TArray<uint8> MIDI;
-
-		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The chunk name for convience sake"))
-		FString Name;
+		TArray<uint8> MIDIBinary;
 };
 
 USTRUCT(BlueprintType)
@@ -263,6 +287,42 @@ struct FMidiStruct
 
 };
 
+USTRUCT(BlueprintType)
+struct FMidiNote
+{
+	GENERATED_BODY()
+
+		UPROPERTY(BlueprintReadWrite)
+		TEnumAsByte<FMidiNoteType> NoteType;
+
+		UPROPERTY(BlueprintReadWrite, meta = (DisplayName = "Description (helper)"))
+		FString Description;
+
+		UPROPERTY(BlueprintReadWrite)
+		uint8 DataByteOne;
+
+		UPROPERTY(BlueprintReadWrite)
+		uint8 DataByteTwo;
+};
+
+USTRUCT(BlueprintType)
+struct FMidiSystemMessage
+{
+	GENERATED_BODY()
+
+		UPROPERTY(BlueprintReadWrite)
+		TEnumAsByte<FMidiSysCommonMessages> SystemCommonMessageType;
+
+		UPROPERTY(BlueprintReadWrite)
+		TEnumAsByte<FMidiSysRealTimeMessages> SystemRealTimeMessages;
+	
+		UPROPERTY(BlueprintReadWrite, meta = (DisplayName = "Description (helper)"))
+		FString Description;
+
+		UPROPERTY(BlueprintReadWrite)
+		TArray<uint8> DataByteArray;
+
+};
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGeneratedTextures, FSpectrogramOutput, Output);
 
@@ -349,7 +409,7 @@ public:
 		static int64 ByteArrayToInt(TArray<uint8> ArrayOfBytes, bool BigEndian, bool Signed);
 
 	//Converts a byte into a char. Used to find MIDI Chunk headers, but usable for general binary files.
-	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Byte Array To Char")
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Byte To Char")
 		static FString ByteToChar(uint8 Byte);
 
 	//This function will tell you if something is a character or not. its used for the "Provide Midi Chunk" function, but is avalible to the user in blueprints.
@@ -361,9 +421,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Is Valid Character")
 		static bool IsValidChar(const uint8 Byte, bool CheckIfChar, bool CheckIfInt, bool CheckIfCommonSpecialCharacter, bool CheckIfUncommonSpecialCharacter, TArray<FString> AdditionalCharacters);
 
-	//Finds and provides header data
+	//Finds and provides midi header data. Note that this includes "MTrk", length, and end of track. This means the chunk length will be 8 longer than the length bytes specify.
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Provide Midi Chunks")
 		static void ProvideMidiChunks(const TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk);
+
+	//Gets notes and provides the data as is in a readable format.
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Get Midi Notes")
+		static void GetNotes(const TArray<uint8> ArrayOfBytes, FMidiNote& MidiNotes);
+
 
 protected:
 
