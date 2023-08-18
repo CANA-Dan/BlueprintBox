@@ -31,10 +31,6 @@ enum FSpectrogramTextureType
 
 	Combined			UMETA(DisplayName = "Combined", ToolTip = "Merges both left and right into a single texture"),
 
-	Separated			UMETA(DisplayName = "Separated", ToolTip = "Gives the left and right channels as seperated texture parts"),
-
-	SeparatedFlipped	UMETA(DisplayName = "SeparatedFlipped", ToolTip = "Same as seperated but the channels are flipped")
-
 };
 
 UENUM(BlueprintType)
@@ -44,8 +40,6 @@ enum FGenerationType
 	Waveform		UMETA(DisplayName = "Waveform"),
 
 	Spectrogram		UMETA(DisplayName = "Spectrogram"),
-
-	SudoWavelet		UMETA(DisplayName = "Sudo-Wavelet"),
 
 };
 
@@ -114,13 +108,14 @@ enum FMidiNoteType
 
 	PitchWheel		UMETA(DisplayName = "Pitch Wheel Change"),
 
-	channelMode		UMETA(DisplayName = "Channel Mode Messages"),
+	SysMes			UMETA(DisplayName = "System Message"),
+
+	NaN				UMETA(DisplayName = "Null"),
 };
 
 UENUM(BlueprintType)
-enum FMidiSysCommonMessages
+enum FMidiSysMessages
 {
-
 	SysEx			UMETA(DisplayName = "System Exclusive (F0)"),
 
 	UndfOne			UMETA(DisplayName = "Undefined 1 (F1)"),
@@ -136,11 +131,6 @@ enum FMidiSysCommonMessages
 	TuneRequest		UMETA(DisplayName = "Tune Request (F6)"),
 
 	EndOfSysEx		UMETA(DisplayName = "End of Exclusive (F7)"),
-};
-
-UENUM(BlueprintType)
-enum FMidiSysRealTimeMessages
-{
 
 	TimingClock		UMETA(DisplayName = "Timing Clock (F8)"),
 
@@ -156,7 +146,45 @@ enum FMidiSysRealTimeMessages
 
 	ActiveSensing	UMETA(DisplayName = "Active Sensing (FE)"),
 
-	Reset			UMETA(DisplayName = "Reset (FF)"),
+	ResetMeta		UMETA(DisplayName = "Reset/Meta Event(FF)"),
+
+	NaSM			UMETA(DisplayName = "Null"),
+};
+
+UENUM(BlueprintType)
+enum FMidiMetaEvents
+{
+	SequenceNum		UMETA(DisplayName = "Sequence Number"),
+
+	Text			UMETA(DisplayName = "Text Event"),
+
+	Copywrite		UMETA(DisplayName = "Copyright Notice"),
+
+	TrackName		UMETA(DisplayName = "Sequence/Track Name"),
+
+	InstrumentName	UMETA(DisplayName = "Instrument Name"),
+
+	Lyric			UMETA(DisplayName = "Lyric"),
+
+	Marker			UMETA(DisplayName = "Marker"),
+
+	CuePoint		UMETA(DisplayName = "Cue Point"),
+
+	ChannelPrefix	UMETA(DisplayName = "Channel Prefix"),
+
+	EndOfTrack		UMETA(DisplayName = "End of Track"),
+
+	SetTempo		UMETA(DisplayName = "Set Tempo"),
+
+	SMPTEOffset		UMETA(DisplayName = "SMPTE Offset"),
+
+	TimeSig			UMETA(DisplayName = "Time Signature"),
+
+	KeySig			UMETA(DisplayName = "Key Signature"),
+
+	SeqMetaEvent	UMETA(DisplayName = "Sequencer Specific Meta-Event"),
+
+	NaME			UMETA(DisplayName = "Null"),
 };
 
 //Input nodes for the fft. Allows you to simplify your setup when it comes to making a thread pool.
@@ -255,7 +283,6 @@ struct FSpectrogramTextures
 
 };
 
-
 USTRUCT(BlueprintType)
 struct FMidiChunk
 {
@@ -279,12 +306,8 @@ struct FMidiStruct
 		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The Type of midi track this is"))
 		TEnumAsByte<FMidiDivision> DivisionType;
 
-		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "How many midi tracks are in this midi file."))
+		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The amount of ticks (or frames) per quarter beat"))
 		int32 Division;
-
-		UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The array containing all your MIDI chunks in binary, including MThd"))
-		TArray<FMidiChunk> ChunkArray;
-
 };
 
 USTRUCT(BlueprintType)
@@ -293,16 +316,26 @@ struct FMidiNote
 	GENERATED_BODY()
 
 		UPROPERTY(BlueprintReadWrite)
-		TEnumAsByte<FMidiNoteType> NoteType;
-
-		UPROPERTY(BlueprintReadWrite, meta = (DisplayName = "Description (helper)"))
-		FString Description;
+		TEnumAsByte<FMidiNoteType> Note;
 
 		UPROPERTY(BlueprintReadWrite)
-		uint8 DataByteOne;
+		TEnumAsByte<FMidiSysMessages> SystemMessage;
 
 		UPROPERTY(BlueprintReadWrite)
-		uint8 DataByteTwo;
+		TEnumAsByte<FMidiMetaEvents> MetaEvent;
+
+		UPROPERTY(BlueprintReadWrite)
+		TArray<uint8> DataBytes;
+
+		UPROPERTY(BlueprintReadWrite)
+		int32 DeltaTime;
+
+		UPROPERTY(BlueprintReadWrite)
+		int32 TickTime;
+
+		UPROPERTY(BlueprintReadWrite)
+		int32 Channel;
+
 };
 
 USTRUCT(BlueprintType)
@@ -311,17 +344,23 @@ struct FMidiSystemMessage
 	GENERATED_BODY()
 
 		UPROPERTY(BlueprintReadWrite)
-		TEnumAsByte<FMidiSysCommonMessages> SystemCommonMessageType;
-
-		UPROPERTY(BlueprintReadWrite)
-		TEnumAsByte<FMidiSysRealTimeMessages> SystemRealTimeMessages;
+		TEnumAsByte<FMidiSysMessages> SystemMessageType;
 	
-		UPROPERTY(BlueprintReadWrite, meta = (DisplayName = "Description (helper)"))
-		FString Description;
+		UPROPERTY(BlueprintReadWrite)
+		TArray<uint8> DataBytes;
 
 		UPROPERTY(BlueprintReadWrite)
-		TArray<uint8> DataByteArray;
+		int32 TickDelta;
 
+};
+
+USTRUCT(BlueprintType)
+struct FMidiTrack
+{
+	GENERATED_BODY()
+
+		UPROPERTY(BlueprintReadWrite)
+		TArray<FMidiNote> TrackData;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGeneratedTextures, FSpectrogramOutput, Output);
@@ -384,7 +423,7 @@ public:
 		static void CalculateSpectrogramAsync(UAnalysisPluginBPLibrary* AnalysisPluginRef, FGenerationType type, FWaveformInput WaveformInput, FSpectrogramInput SpectrogramInput, int32 ChunkIndex, int32 ThreadID);
 	
 	//======================================================================================================================
-	//											Sorting Stuff
+	//											Data Stuff
 	//======================================================================================================================
 
 	//This uses an inefficient radix sorting algorithm to sort actors on any transform. Inefficient because I made it from scratch, but still way faster than the base sort function in C++.
@@ -393,12 +432,21 @@ public:
 	//UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | Sorting", DisplayName = "Radix Sort Actors Transform")
 		//static TArray<AActor*> RadixSortActorsTransform(TArray<AActor*> ActorArray, FActorTransform SortingAxis, int64 accuracy);
 
+	//Allows you to find any refernces to an object.
+	//Rama made a tutorial on this. Im just grabbing it.
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | Data Stuff", DisplayName = "Get Object Reference Count")
+		static void GetObjReferenceCount(UObject* Obj, TArray<UObject*>& OutReferencedObjects);
+
+	//Allows you to mark objects for deletion. Im not sure why this isnt implimented in blueprints, but it is now.
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | Data Stuff", DisplayName = "Destruct Object")
+		static void FreeMem(UObject* Object);
+
 	//======================================================================================================================
 	//											MIDI Styff
 	//======================================================================================================================
 
 	//Used for importing MIDI, but can be used to import any binary file in theory.
-	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "Import MIDI/Binary From Disk")
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Import Binary From Disk")
 		static void ImportBinaryFromDisk(FString Path, TArray<uint8>& ArrayOfBytes, FString& ErrorLog);
 
 	//Allows you to convert an array of bytes into its higher value int counterparts.
@@ -423,12 +471,53 @@ public:
 
 	//Finds and provides midi header data. Note that this includes "MTrk", length, and end of track. This means the chunk length will be 8 longer than the length bytes specify.
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Provide Midi Chunks")
-		static void ProvideMidiChunks(const TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk);
+		static void ProvideMidiChunks(const TArray<uint8> ArrayOfBytes, FMidiStruct& MetaData, TArray<FMidiChunk>& Chunk);
 
-	//Gets notes and provides the data as is in a readable format.
-	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Get Midi Notes")
-		static void GetNotes(const TArray<uint8> ArrayOfBytes, FMidiNote& MidiNotes);
+	//@param ArrayOfBytes - Chunk array goes here.
+	//@param StartIndex - This Value should be the index of the byte right after the three bytes of a note or other midi data.
+	//@param TickDelta - How many ticks from the previous data value.
+	//@param NewIndex - The index of the next piece of data.
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Get Tick Delta")
+		static void GetTickDelta(const TArray<uint8> ArrayOfBytes, const int32 StartIndex, int32& TickDelta, int32& NewIndex);
 
+	//@param ArrayOfBytes - Chunk array goes here.
+	//@param StartIndex - This Value should be the index of the byte right after the three bytes of a note or other midi data.
+	//@param DataType - For data type. read here (appendix 1.1) for more information http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
+	//@param NewIndex - The index of the next piece of data, likely the tick delta function.
+	//@param ByteReturn - The data to return. check if the length is 0, it is a system message.
+	//@param Channel - goes from 0 to 15. Special exception for system messages, which arent tied to channel, and instead are system message type (Song Select, Tune Request, Timing Clock, ect...)
+	//@param NewIndex - The index of the next piece of data.
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Get Midi Data Type")
+		static void GetMidiType(const TArray<uint8> ArrayOfBytes, const int32 StartIndex, TEnumAsByte<FMidiNoteType>& DataType, TArray<uint8>& DataReturn, int32& Channel, int32& NewIndex);
+
+	//@param ArrayOfBytes - Chunk array goes here.
+	//@param StartIndex - This Value should be the index of the byte right after the three bytes of a note or other midi data.
+	//@param DataType - For data type. read here (appendix 1.1 and 3 - Meta Events) for more information http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
+	//@param NewIndex - The index of the next piece of data, likely the tick delta function.
+	//@param DataReturn - The data to return. If the type being returned is System Exclusive, more processing will need to take place as this is custom length data. Meta Events are static sized, but special in their nature. use the Get Meta Events plugin to decode them.
+	//@param NewIndex - The index of the next piece of data.
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) GetSystem Message")
+		static void GetSysMessage(const TArray<uint8> ArrayOfBytes, const int32 StartIndex, TEnumAsByte<FMidiSysMessages>& DataType, TArray<uint8>& DataReturn, int32& NewIndex);
+	
+	//these Events will be stuff like text, bpm changes, lyrics, offset, ect.
+	//@param ArrayOfBytes - Chunk array goes here.
+	//@param StartIndex - This Value should be the index of the byte right after the three bytes of a note or other midi data.
+	//@param DataType - For data type. read here (3 - Meta Events) for more information http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
+	//@param NewIndex - The index of the next piece of data, likely the tick delta function.
+	//@param DataLength - the size of the message being sent
+	//@param NewIndex - The index of the next piece of data.
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "(Internal) Get Meta Event")
+		static void GetMetaEvent(const TArray<uint8> ArrayOfBytes, const int32 StartIndex, TEnumAsByte<FMidiMetaEvents>& DataType, TArray<uint8>& DataReturn, int32& NewIndex);
+	
+	//Gets the midi from disk and provides in a readable format
+	//@param ArrayOfBytes - Location to midi file
+	//@param StartIndex - This Value should be the index of the byte right after the three bytes of a note or other midi data.
+	//@param DataType - For data type. read here (3 - Meta Events) for more information http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html
+	//@param NewIndex - The index of the next piece of data, likely the tick delta function.
+	//@param DataLength - the size of the message being sent
+	//@param NewIndex - The index of the next piece of data.
+	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | MIDI Importing", DisplayName = "Import Midi")
+		static void ImportMidi(FString MidiFileLocation, FString& ErrorLog, FMidiStruct& MetaData, TArray<FMidiTrack>& MidiTracks);
 
 protected:
 

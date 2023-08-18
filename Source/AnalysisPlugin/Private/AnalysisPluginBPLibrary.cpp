@@ -295,7 +295,7 @@ void UAnalysisPluginBPLibrary::MakeSpectrogramColorArray(FSpectrogramInput Spect
 
 				MainSpectrogram = Channel;
 				UAnalysisPluginBPLibrary::CalculateFFT(MainSpectrogram, NumChannels, SampleRate, MainSpectrogram, WarningOut);
-
+				
 				int32 MainSpectrogramLen = MainSpectrogram.Num();
 				for (int32 FrequencyIndex = 0; FrequencyIndex < MainSpectrogramLen; FrequencyIndex++) {
 
@@ -357,166 +357,10 @@ void UAnalysisPluginBPLibrary::MakeSpectrogramColorArray(FSpectrogramInput Spect
 
 				break;
 			}
-			case Separated: {
-
-				int TempLength = MainSpectrogram.Num() / 2;
-				TArray<float> ChannelLeft = {};
-
-				ChannelLeft.SetNumZeroed(TempLength);
-				for (int i = 0; i < TempLength; i++) {
-					ChannelLeft[i] = MainSpectrogram[i * 2];
-				}
-
-				ChannelLeft;
-				UAnalysisPluginBPLibrary::CalculateFFT(ChannelLeft, NumChannels, SampleRate, ChannelLeft, WarningOut);
-
-				int32 MainSpectrogramLen = ChannelLeft.Num();
-				for (int32 FrequencyIndex = 0; FrequencyIndex < MainSpectrogramLen; FrequencyIndex++) {
-
-					if (FrequencyIndex >= BandsMin) {
-
-						if (FrequencyIndex <= BandsMax) {
-
-							float MainSpectrogramVal = clampRange(ChannelLeft[FrequencyIndex], 10.f, 0.0f);
-
-							FColor CurrentPixel;
-							int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
-							CurrentPixel.R = colorVal;
-							CurrentPixel.G = colorVal;
-							CurrentPixel.B = colorVal;
-							CurrentPixel.A = 255;
-							Pixels.Add(CurrentPixel);
-
-						}
-						else {
-							break;
-						}
-
-					}
-
-				}
-
-				TArray<float> ChannelRight = {};
-
-				ChannelRight.SetNumZeroed(TempLength);
-				for (int i = 0; i < TempLength; i++) {
-					ChannelRight[i] = MainSpectrogram[(i * 2) + 1];
-				}
-
-				MainSpectrogram = ChannelRight;
-				UAnalysisPluginBPLibrary::CalculateFFT(ChannelRight, NumChannels, SampleRate, ChannelRight, WarningOut);
-
-				MainSpectrogramLen = ChannelRight.Num();
-				for (int32 FrequencyIndex = 0; FrequencyIndex < MainSpectrogramLen; FrequencyIndex++) {
-
-					if (FrequencyIndex >= BandsMin) {
-
-						if (FrequencyIndex <= BandsMax) {
-
-							float MainSpectrogramVal = clampRange(ChannelRight[FrequencyIndex], 10.f, 0.0f);
-
-							FColor CurrentPixel;
-							int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
-							CurrentPixel.R = colorVal;
-							CurrentPixel.G = colorVal;
-							CurrentPixel.B = colorVal;
-							CurrentPixel.A = 255;
-							Pixels.Add(CurrentPixel);
-
-						}
-						else {
-							break;
-						}
-
-					}
-
-				}
-
-				break;
-			}
-			case SeparatedFlipped: {
-
-				int TempLength = MainSpectrogram.Num() / 2;
-				TArray<float> ChannelRight = {};
-
-				ChannelRight.SetNumZeroed(TempLength);
-				for (int i = 0; i < TempLength; i++) {
-					ChannelRight[i] = MainSpectrogram[(i * 2) + 1];
-				}
-
-				ChannelRight;
-				UAnalysisPluginBPLibrary::CalculateFFT(ChannelRight, NumChannels, SampleRate, ChannelRight, WarningOut);
-
-				int32 MainSpectrogramLen = ChannelRight.Num();
-				for (int32 FrequencyIndex = 0; FrequencyIndex < MainSpectrogramLen; FrequencyIndex++) {
-
-					if (FrequencyIndex >= BandsMin) {
-
-						if (FrequencyIndex <= BandsMax) {
-
-							float MainSpectrogramVal = clampRange(ChannelRight[FrequencyIndex], 10.f, 0.0f);
-
-							FColor CurrentPixel;
-							int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
-							CurrentPixel.R = colorVal;
-							CurrentPixel.G = colorVal;
-							CurrentPixel.B = colorVal;
-							CurrentPixel.A = 255;
-							Pixels.Add(CurrentPixel);
-
-						}
-						else {
-							break;
-						}
-
-					}
-
-				}
-
-				TArray<float> ChannelLeft = {};
-
-				ChannelLeft.SetNumZeroed(TempLength);
-				for (int i = 0; i < TempLength; i++) {
-					ChannelLeft[i] = MainSpectrogram[i * 2];
-				}
-
-				MainSpectrogram = ChannelLeft;
-				UAnalysisPluginBPLibrary::CalculateFFT(ChannelLeft, NumChannels, SampleRate, ChannelLeft, WarningOut);
-
-				MainSpectrogramLen = ChannelLeft.Num();
-				for (int32 FrequencyIndex = 0; FrequencyIndex < MainSpectrogramLen; FrequencyIndex++) {
-
-					if (FrequencyIndex >= BandsMin) {
-
-						if (FrequencyIndex <= BandsMax) {
-
-							float MainSpectrogramVal = clampRange(ChannelLeft[FrequencyIndex], 10.f, 0.0f);
-
-							FColor CurrentPixel;
-							int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
-							CurrentPixel.R = colorVal;
-							CurrentPixel.G = colorVal;
-							CurrentPixel.B = colorVal;
-							CurrentPixel.A = 255;
-							Pixels.Add(CurrentPixel);
-
-						}
-						else {
-							break;
-						}
-
-					}
-
-				}
-
-				break;
-			}
 		}
 
 		//the make pixel stuff goes here
-
 		BandsGenerated = BandsMax * (Chunkpart - (SpectrogramSamples * ThreadLocation));
-
 	}
 
 	ContinueLooping = FGenerationStatus::Loop;
@@ -597,7 +441,7 @@ void UAnalysisPluginBPLibrary::MakeWaveformColorArray(FWaveformInput WaveformVal
 
 			//onto the main pixel manipulation stuff. pretty simple. Color a line of pixels from point A to point B white.
 			if (Start < End) {
-				for (int32 i = Start; i <= End; i++) {
+				for (int32 i = Start; i < End; i++) {
 
 					TempPixels[i] = WhitePixel;
 				}
@@ -605,7 +449,7 @@ void UAnalysisPluginBPLibrary::MakeWaveformColorArray(FWaveformInput WaveformVal
 				Pixels.Append(TempPixels);
 			}
 			else {
-				for (int32 i = End; i <= Start; i++) {
+				for (int32 i = End; i < Start; i++) {
 
 					TempPixels[i] = WhitePixel;
 				}
@@ -640,6 +484,7 @@ UAnalysisPluginBPLibrary* UAnalysisPluginBPLibrary::CreateAnalysisPluginRef() {
 //this function is on the secondary thread.
 void UAnalysisPluginBPLibrary::CalculateSpectrogramAsync(UAnalysisPluginBPLibrary* AnalysisPluginRef, FGenerationType type, FWaveformInput WaveformInput, FSpectrogramInput SpectrogramInput, int32 ChunkIndex, int32 ThreadID) {
 
+	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("accessing now"));
 
 	FSpectrogramOutput TempOutput;
 	UAnalysisPluginBPLibrary* ref = AnalysisPluginRef;
@@ -797,7 +642,7 @@ void UAnalysisPluginBPLibrary::DoneCalculating_Internal(FSpectrogramOutput outpu
 }
 
 //======================================================================================================================
-//											Sorting Stuff
+//											Data Stuff
 //======================================================================================================================
 
 //helper function to get the specific transfrom type requested.
@@ -905,6 +750,34 @@ void UAnalysisPluginBPLibrary::DoneCalculating_Internal(FSpectrogramOutput outpu
 //
 //	return RadixActorArray;
 //}
+
+void UAnalysisPluginBPLibrary::GetObjReferenceCount(UObject* Obj, TArray<UObject*>& OutReferencedObjects)
+{
+	if (!Obj || !Obj->IsValidLowLevelFast())
+	{
+		return;
+	}
+
+	TArray<UObject*> ReferredToObjects;             //req outer, ignore archetype, recursive, ignore transient
+	FReferenceFinder ObjectReferenceCollector(ReferredToObjects, Obj, false, true, true, false);
+	ObjectReferenceCollector.FindReferences(Obj);
+
+
+	OutReferencedObjects.Append(ReferredToObjects);
+;
+}
+
+void UAnalysisPluginBPLibrary::FreeMem(UObject* Object)
+{
+		//stacked like this because 'IsPendingKill' will throw an exception if it isnt valid. ie, i dont think i can do it on the same line.
+		if (Object->IsValidLowLevel()) {
+			if (!Object->IsPendingKill()) {
+				Object->UObject::ConditionalBeginDestroy();
+			}
+		}
+
+}
+
 
 //======================================================================================================================
 //											Midi Stuff
@@ -1131,22 +1004,7 @@ bool UAnalysisPluginBPLibrary::IsValidChar(const uint8 Byte, bool CheckIfChar, b
 	return false;
 }
 
-void systemMessages(TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk, int32 i, TArray<uint8> param1, int32 offset) {
-	TArray<uint8> param2;
-	param2.SetNum(param1.Num());
-	param2 = { ArrayOfBytes[offset - 1], ArrayOfBytes[offset] };
-
-	if (param1 == param2) {
-		int32 Len = ArrayOfBytes[offset + 1];
-		FString name;
-		for (int i = 0; i < Len; i++) {
-			name = name + UAnalysisPluginBPLibrary::ByteToChar(ArrayOfBytes[offset + 2 + i]);
-		}
-		MidiChunk.ChunkArray[i];
-	}
-}
-
-void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMidiStruct& MidiChunk)
+void UAnalysisPluginBPLibrary::ProvideMidiChunks(const TArray<uint8> ArrayOfBytes, FMidiStruct& MetaData, TArray<FMidiChunk>& Chunk)
 {
 	int32 length = ArrayOfBytes.Num();
 	int32 uintToInt = pow(2, 31);
@@ -1184,7 +1042,7 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 				for (int j = 0; j < len; j++) {
 					Array[j] = ArrayOfBytes[hO + j];
 				}
-				MidiChunk.Format = FMidiFormat(ByteArrayToInt(Array, true, false));
+				MetaData.Format = FMidiFormat(ByteArrayToInt(Array, true, false));
 				hO += len;
 
 				//how many midi tracks this file contains
@@ -1193,7 +1051,7 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 				for (int j = 0; j < len; j++) {
 					Array[j] = ArrayOfBytes[hO + j];
 				}
-				MidiChunk.TrackCount = ByteArrayToInt(Array, true, false);
+				MetaData.TrackCount = ByteArrayToInt(Array, true, false);
 				hO += len;
 
 				//expected values are 192, 128, 96 or something.
@@ -1205,16 +1063,16 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 					for (int j = 0; j < len; j++) {
 						Array[j] = ArrayOfBytes[hO + j];
 					}
-					MidiChunk.Division = ByteArrayToInt(Array, true, false);
-					MidiChunk.DivisionType = Ticks;
+					MetaData.Division = ByteArrayToInt(Array, true, false);
+					MetaData.DivisionType = Ticks;
 
 				} else {
 					//this is SMTPE frames
 					//left byte is converted to signed (should be a value like -24, -25, -29, or -30) then is converted to positive and multiplied by the ticks per frame value.
 					//25 * 40 for example gives the value of 1ms per tick
 
-					MidiChunk.Division = (int8(ArrayOfBytes[hO]) * -1) * ArrayOfBytes[hO];
-					MidiChunk.DivisionType = SMTPEframes;
+					MetaData.Division = (int8(ArrayOfBytes[hO]) * -1) * ArrayOfBytes[hO];
+					MetaData.DivisionType = SMTPEframes;
 				}
 
 				//just to be sure the location we are going to is the next header
@@ -1225,18 +1083,7 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 		}
 	}
 
-	MidiChunk.ChunkArray.SetNum(MidiChunk.TrackCount);
-
-	//system exclusive events. each one should be self explanitory. used this for refernce. scroll down to events http://midi.mathewvp.com/aboutMidi.html or http://personal.kent.edu/~sbirch/Music_Production/MP-II/MIDI/midi_file_format.htm
-	TArray<uint8> ChunkEnd = { 255, 47, 0 };
-
-	TArray<uint8> ChunkText = { 255, 1 };
-	TArray<uint8> ChunkCopyright = { 255, 2 };
-	TArray<uint8> ChunkTrackName = { 255, 3 };
-	TArray<uint8> ChunkInstrument = { 255, 4 };
-	TArray<uint8> ChunkLyric = { 255, 5 };
-	TArray<uint8> ChunkMarker = { 255, 6 };
-	TArray<uint8> ChunkCuePoint = { 255, 7 };
+	Chunk.SetNum(MetaData.TrackCount);
 
 	int ChunkIndex = -1;
 
@@ -1257,15 +1104,558 @@ void UAnalysisPluginBPLibrary::ProvideMidiChunks(TArray<uint8> ArrayOfBytes, FMi
 		}
 
 		//checking if the chunks index is valid.
-		if (ChunkIndex < MidiChunk.TrackCount) {
+		if (ChunkIndex < MetaData.TrackCount) {
 
-			MidiChunk.ChunkArray[ChunkIndex].MIDIBinary.Add(ArrayOfBytes[i]);
+			Chunk[ChunkIndex].MIDIBinary.Add(ArrayOfBytes[i]);
 		}
 		
 	}
 }
 
-void UAnalysisPluginBPLibrary::GetNotes(const TArray<uint8> ArrayOfBytes, FMidiNote& MidiNotes)
-{
+void UAnalysisPluginBPLibrary::GetTickDelta(const TArray<uint8> ArrayOfBytes, int32 StartIndex, int32& TickDelta, int32& NewIndex)
+{	
+	//good sanity check. variable length data cant be more than 4 byts anyways as the value needs to fit into the a 32 bit int.
+	int MaxEndIndex = StartIndex + 4;
+
+	TArray<uint8> timeDelta;
+	int32 TempDelta = 0;
+
+	for (int i = StartIndex; i < MaxEndIndex; i++) {
+		//if it encounters a value higher than F7, it needs to be overflowed down to 00. 81 is equivilent to 1. 
+		//this also means that its not the last value in the var len data, as the last value will always be below 128.
+		if (ArrayOfBytes[i] > 127) {
+			timeDelta.Add(ArrayOfBytes[i] - 128);
+		}
+		else {
+			timeDelta.Add(ArrayOfBytes[i]);
+			break;
+		}
+	}
+
+	int len = timeDelta.Num() - 1;
+	
+	for (int i = len; i >= 0; i--) {
+
+		TempDelta = TempDelta + timeDelta[len - i] * pow(128, i);
+	}
+	TickDelta = TempDelta;
+	NewIndex = len + 1 + StartIndex;
 }
 
+void UAnalysisPluginBPLibrary::GetMidiType(const TArray<uint8> ArrayOfBytes, int32 StartIndex, TEnumAsByte<FMidiNoteType>& DataType, TArray<uint8>& DataReturn, int32& Channel, int32& NewIndex)
+{	
+	uint8 byte = ArrayOfBytes[StartIndex];
+	Channel = byte % 16;
+	int firstHex = (byte - Channel) / 16;
+
+
+	switch (firstHex) {
+		case 8:
+		{
+			DataType = NoteOff;
+			int DataLength = 2;
+			for (int i = 0; i < DataLength; i++) {
+				uint8 data = ArrayOfBytes[StartIndex + i + 1];
+				if (data > 127) {
+					DataType = NaN;
+					NewIndex = StartIndex + 1;
+					return;
+				}
+				DataReturn.Add(data);
+			}
+			NewIndex = StartIndex + 1 + DataLength;
+			return;
+		}
+		case 9:
+		{
+			DataType = NoteOn;
+			int DataLength = 2;
+			for (int i = 0; i < DataLength; i++) {
+				uint8 data = ArrayOfBytes[StartIndex + i + 1];
+				if (data > 127) {
+					DataType = NaN;
+					NewIndex = StartIndex + 1;
+					return;
+				}
+				DataReturn.Add(data);
+			}
+			NewIndex = StartIndex + 1 + DataLength;
+			return;
+		}
+		case 10:
+		{
+			DataType = AfterTouch;
+			int DataLength = 2;
+			for (int i = 0; i < DataLength; i++) {
+				uint8 data = ArrayOfBytes[StartIndex + i + 1];
+				if (data > 127) {
+					DataType = NaN;
+					NewIndex = StartIndex + 1;
+					return;
+				}
+				DataReturn.Add(data);
+			}
+			NewIndex = StartIndex + 1 + DataLength;
+			return;
+		}
+		case 11:
+		{
+			DataType = ControlChange;
+			int DataLength = 2;
+			for (int i = 0; i < DataLength; i++) {
+				uint8 data = ArrayOfBytes[StartIndex + i + 1];
+				if (data > 127) {
+					DataType = NaN;
+					NewIndex = StartIndex + 1;
+					return;
+				}
+				DataReturn.Add(data);
+			}
+			NewIndex = StartIndex + 1 + DataLength;
+			return;
+		}
+		case 12:
+		{
+			DataType = ProgramChange;
+			int DataLength = 1;
+			for (int i = 0; i < DataLength; i++) {
+				uint8 data = ArrayOfBytes[StartIndex + i + 1];
+				if (data > 127) {
+					DataType = NaN;
+					NewIndex = StartIndex + 1;
+					return;
+				}
+				DataReturn.Add(data);
+			}
+			NewIndex = StartIndex + 1 + DataLength;
+			return;
+		}
+		case 13:
+		{
+			DataType = ChannelPressure;
+			int DataLength = 1;
+			for (int i = 0; i < DataLength; i++) {
+				uint8 data = ArrayOfBytes[StartIndex + i + 1];
+				if (data > 127) {
+					DataType = NaN;
+					NewIndex = StartIndex + 1;
+					return;
+				}
+				DataReturn.Add(data);
+			}
+			NewIndex = StartIndex + 1 + DataLength;
+			return;
+		}
+		case 14:
+		{
+			DataType = PitchWheel;
+			int DataLength = 2;
+			for (int i = 0; i < DataLength; i++) {
+				uint8 data = ArrayOfBytes[StartIndex + i + 1];
+				if (data > 127) {
+					DataType = NaN;
+					NewIndex = StartIndex + 1;
+					return;
+				}
+				DataReturn.Add(data);
+			}
+			NewIndex = StartIndex + 1 + DataLength;
+			return;
+		}
+		case 15:
+		{
+			DataType = SysMes;
+			NewIndex = StartIndex;
+			return;
+		}
+		default:
+		{
+			DataType = NaN;
+			NewIndex = StartIndex + 1;
+			return;
+		}
+	}
+}
+
+void UAnalysisPluginBPLibrary::GetSysMessage(const TArray<uint8> ArrayOfBytes, int32 StartIndex, TEnumAsByte<FMidiSysMessages>& DataType, TArray<uint8>& DataReturn, int32& NewIndex)
+{
+	uint8 byte = ArrayOfBytes[StartIndex];
+	int secondHex = byte % 16;
+
+	switch (secondHex) {
+		case 0:
+		{
+			DataType = SysEx;
+			uint8 Data = 0;
+			int DataLength = 0;
+
+			//does a check for the while loop so it doesnt exceed 1000 loops. as a sanity check. because this is totally dynamically sized, i think iv just got to do this and hope for the best.
+			if (DataReturn.Num() > 0) {
+				while ((Data != 247) && (DataLength < 1000)) {
+
+					Data = ArrayOfBytes[StartIndex + DataLength];
+					DataReturn[DataLength] = Data;
+					DataLength++;
+				}
+			}
+			
+			NewIndex = StartIndex + 1 + DataLength;
+			return;
+		}
+		case 1:
+		{
+			DataType = UndfOne;
+			NewIndex = StartIndex + 1;
+			return;
+		}
+		case 2:
+		{
+			DataType = SongPosPtr;
+			int DataLength = 2;
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[StartIndex + i]);
+			}
+			NewIndex = StartIndex + 1 + DataLength;
+			return;
+		}
+		case 3:
+		{
+			DataType = SongSelect;
+			int DataLength = 1;
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[StartIndex + i]);
+			}
+			NewIndex = StartIndex + 1 + DataLength;
+			return;
+		}
+		case 4:
+		{
+			DataType = UndfTwo;
+			NewIndex = StartIndex + 1;
+			return;
+		}
+		case 5:
+		{
+			DataType = UndfThree;
+			NewIndex = StartIndex + 1;
+			return;
+		}
+		case 6:
+		{
+			DataType = TuneRequest;
+			NewIndex = StartIndex + 1;
+			return;
+		}
+		case 7:
+		{
+			DataType = EndOfSysEx;
+			NewIndex = StartIndex + 1;
+			return;
+		}
+		case 8:
+		{
+			DataType = TimingClock;
+			NewIndex = StartIndex + 1;
+			return;
+		}
+		case 9:
+		{
+			DataType = UndfFour;
+			NewIndex = StartIndex + 1;
+			return;
+		}
+		case 10:
+		{
+			DataType = Start;
+			NewIndex = StartIndex + 1;
+			return;
+		}
+		case 11:
+		{
+			DataType = Continue;
+			NewIndex = StartIndex + 1;
+			return;
+		}
+		case 12:
+		{
+			DataType = Stop;
+			NewIndex = StartIndex + 1;
+			return;
+		}
+		case 13:
+		{
+			DataType = UndfFive;
+			NewIndex = StartIndex + 1;
+			return;
+		}
+		case 14:
+		{
+			DataType = ActiveSensing;
+			NewIndex = StartIndex + 1;
+			return;
+		}
+		case 15:
+		{
+			DataType = ResetMeta;
+			NewIndex = StartIndex;
+			return;
+		}
+	}
+}
+
+void UAnalysisPluginBPLibrary::GetMetaEvent(const TArray<uint8> ArrayOfBytes, const int32 StartIndex, TEnumAsByte<FMidiMetaEvents>& DataType, TArray<uint8>& DataReturn, int32& NewIndex) {
+
+	int index = StartIndex + 1;
+	uint8 Type = ArrayOfBytes[index];
+	index = StartIndex + 2;
+	switch (Type) {
+		case 0:
+		{
+			DataType = SequenceNum;
+			int DataLength = 0;
+			int nah = 0;
+			UAnalysisPluginBPLibrary::GetTickDelta(ArrayOfBytes, index, DataLength, nah);
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[index + i + 1]);
+			}
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+		case 1:
+		{
+			DataType = Text;
+			int DataLength = 0;
+			int nah = 0;
+			UAnalysisPluginBPLibrary::GetTickDelta(ArrayOfBytes, index, DataLength, nah);
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[index + i + 1]);
+			}
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+		case 2:
+		{
+			DataType = Copywrite;
+			int DataLength = 0;
+			int nah = 0;
+			UAnalysisPluginBPLibrary::GetTickDelta(ArrayOfBytes, index, DataLength, nah);
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[index + i + 1]);
+			}
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+		case 3:
+		{
+			DataType = TrackName;
+			int DataLength = 0;
+			int nah = 0;
+			UAnalysisPluginBPLibrary::GetTickDelta(ArrayOfBytes, index, DataLength, nah);
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[index + i + 1]);
+			}
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+		case 4:
+		{
+			DataType = InstrumentName;
+			int DataLength = 0;
+			int nah = 0;
+			UAnalysisPluginBPLibrary::GetTickDelta(ArrayOfBytes, index, DataLength, nah);
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[index + i + 1]);
+			}
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+		case 5:
+		{
+			DataType = Lyric;
+			int DataLength = 0;
+			int nah = 0;
+			UAnalysisPluginBPLibrary::GetTickDelta(ArrayOfBytes, index, DataLength, nah);
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[index + i + 1]);
+			}
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+		case 6:
+		{
+			DataType = Marker;
+			int DataLength = 0;
+			int nah = 0;
+			UAnalysisPluginBPLibrary::GetTickDelta(ArrayOfBytes, index, DataLength, nah);
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[index + i + 1]);
+			}
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+		case 7:
+		{
+			DataType = CuePoint;
+			int DataLength = 0;
+			int nah = 0;
+			UAnalysisPluginBPLibrary::GetTickDelta(ArrayOfBytes, index, DataLength, nah);
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[index + i + 1]);
+			}
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+		case 32:
+		{
+			DataType = ChannelPrefix;
+			int DataLength = 1;
+			DataReturn.Add(ArrayOfBytes[index + DataLength]);
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+		case 47:
+		{
+			DataType = EndOfTrack;
+			int DataLength = 1;
+			DataReturn.Add(0);
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+		case 81:
+		{
+			DataType = SetTempo;
+			int DataLength = 3;
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[index + i + 1]);
+			}
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+		case 84:
+		{
+			DataType = SMPTEOffset;
+			int DataLength = 5;
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[index + i + 1]);
+			}
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+		case 88:
+		{
+			DataType = TimeSig;
+			int DataLength = 4;
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[index + i + 1]);
+			}
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+		case 89:
+		{
+			DataType = KeySig;
+			int DataLength = 2;
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[index + i + 1]);
+			}
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+		case 127:
+		{
+			DataType = SeqMetaEvent;
+			int DataLength = 0;
+			int nah = 0;
+			UAnalysisPluginBPLibrary::GetTickDelta(ArrayOfBytes, StartIndex + 2, DataLength, nah);
+			for (int i = 0; i < DataLength; i++) {
+				DataReturn.Add(ArrayOfBytes[index + i + 1]);
+			}
+			NewIndex = index + 1 + DataLength;
+			return;
+		}
+	}
+}
+
+void UAnalysisPluginBPLibrary::ImportMidi(FString MidiFileLocation, FString& ErrorLog, FMidiStruct& MetaData, TArray<FMidiTrack>& MidiTracks)
+{
+	TArray<uint8> bytes;
+
+	TArray<FMidiChunk> chunks;
+	UAnalysisPluginBPLibrary::ImportBinaryFromDisk(MidiFileLocation, bytes, ErrorLog);
+
+	UAnalysisPluginBPLibrary::ProvideMidiChunks(bytes, MetaData, chunks);
+
+	TArray<FMidiTrack> Tracks;
+	Tracks.SetNum(chunks.Num());
+	TEnumAsByte<FMidiNoteType> NoteType;
+	TEnumAsByte<FMidiSysMessages> SysMesType;
+	TEnumAsByte<FMidiMetaEvents> MetaEventType;
+
+	
+
+	//to get past the header data
+	int index = 0;
+	int tickDelta = 0;
+	int tick = 0;
+	int channel = 0;
+
+	for (int i = 0; i < chunks.Num(); i++)
+	{	
+		index = 9;
+		tick = 0;
+
+		TArray<FMidiNote> noteArray;
+
+		TArray<uint8> Binary;
+		Binary = chunks[i].MIDIBinary;
+		
+		while (index < Binary.Num())
+		{	
+			FMidiNote note;
+			TArray<uint8> DataBytes;
+
+			UAnalysisPluginBPLibrary::GetMidiType(Binary, index, NoteType, DataBytes, channel, index);
+			note.Note = NoteType;
+			note.Channel = channel;
+			note.DataBytes = DataBytes;
+
+			if (NoteType == SysMes) {
+
+				UAnalysisPluginBPLibrary::GetSysMessage(Binary, index, SysMesType, DataBytes, index);
+				note.SystemMessage = SysMesType;
+				note.DataBytes = DataBytes;
+
+				if (SysMesType == ResetMeta) {
+
+					UAnalysisPluginBPLibrary::GetMetaEvent(Binary, index, MetaEventType, DataBytes, index);
+					note.MetaEvent = MetaEventType;
+					note.DataBytes = DataBytes;
+
+				}
+				else {
+					note.MetaEvent = FMidiMetaEvents::NaME;
+				}
+			}
+			else {
+				note.SystemMessage = FMidiSysMessages::NaSM;
+				note.MetaEvent = FMidiMetaEvents::NaME;
+			}
+
+			if ((NoteType != NaN) && (MetaEventType != EndOfTrack)) {
+
+				tick = tick + tickDelta;
+				note.DeltaTime = tickDelta;
+				note.TickTime = tick;
+
+				// value of tick delta is stored for next time. this value is for the distance to the next note, thats why im using the previous dick delta for the calculation
+				UAnalysisPluginBPLibrary::GetTickDelta(Binary, index, tickDelta, index);
+			}
+
+			noteArray.Add(note);
+
+		}
+		Tracks[i].TrackData = noteArray;
+
+	}
+	MidiTracks = Tracks;
+}
