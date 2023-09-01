@@ -426,16 +426,27 @@ public:
 	//											Data Stuff
 	//======================================================================================================================
 
-	//This uses an inefficient radix sorting algorithm to sort actors on any transform. Inefficient because I made it from scratch, but still way faster than the base sort function in C++.
-	//@param SortingAxis - what axis you want to sort by. will only sort positive value for now.
-	//@param AnalysisPluginRef - because transforms are floats, this allows you to dial in how accurate deep the radix sorter goes. low values will be faster. Use a value like 100 to go down to 0.01 in accuracy.
-	//UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | Sorting", DisplayName = "Radix Sort Actors Transform")
-		//static TArray<AActor*> RadixSortActorsTransform(TArray<AActor*> ActorArray, FActorTransform SortingAxis, int64 accuracy);
+	//This uses a somewhat unoptimized radix sorting algorithm to sort actors on any transform. Unpotimized because I made it from scratch, but still way faster than the base sort function in C++. i think.
+	//@param SortingAxis - what axis you want to sort by. will sort both positive and negative numbers
+	//@param Accuracy - because transforms are floats, this allows you to dial in how accurate deep the radix sorter goes. low values like 1 or 0.1 will be faster but less accurate. high values 100 or 1000 will be slower but more accurate.
+	//@param position - acts as a change log of position swaps. this way you can swap other stuff that may be attached to the actor, but not directly contained within.
+	UFUNCTION(blueprintcallable, category = "analysis plugin | Data Stuff", displayname = "Radix sort actors transform")
+		static TArray<AActor*> RadixSortActorsTransform(TArray<AActor*> ActorArray, FActorTransform SortingAxis, float Accuracy = 1000.f);
+
+	//A programatic way to get actor transform on a specific axis.
+	UFUNCTION(blueprintcallable, BlueprintPure, category = "analysis plugin | Data Stuff", displayname = "Get actor transform")
+		static float getTransformAxis(AActor* ActorRef, FActorTransform Axis);
+	
+	template<class TypeFrom, class TypeTo>
+
+	//allows you to cast an entire array all at once
+	UFUNCTION(blueprintcallable, category = "analysis plugin | Data Stuff", displayname = "Cast Array")
+		static void CastArray(const TArray<TypeFrom*> FromObjArray, TArray<TypeTo*>& ToObjArray);
 
 	//Allows you to find any refernces to an object.
 	//Rama made a tutorial on this. Im just grabbing it.
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | Data Stuff", DisplayName = "Get Object Reference Count")
-		static void GetObjReferenceCount(UObject* Obj, TArray<UObject*>& OutReferencedObjects);
+		static void GetObjReferences(UObject* Obj, TArray<UObject*>& OutReferencedObjects);
 
 	//Allows you to mark objects for deletion. Im not sure why this isnt implimented in blueprints, but it is now.
 	UFUNCTION(BlueprintCallable, Category = "Analysis Plugin | Data Stuff", DisplayName = "Destruct Object")

@@ -11,6 +11,7 @@
 #include "UObject/WeakObjectPtrTemplates.h"
 #include "UObject/UObjectGlobals.h"
 #include "GameFramework/Actor.h"
+#include "GenericPlatform/GenericPlatformMath.h"
 #include <complex>
 #include <valarray>
 #include <cmath>
@@ -645,113 +646,143 @@ void UAnalysisPluginBPLibrary::DoneCalculating_Internal(FSpectrogramOutput outpu
 //											Data Stuff
 //======================================================================================================================
 
-//helper function to get the specific transfrom type requested.
-//float getTransform(AActor* ActorRef, FActorTransform SortingAxis) {
-//	switch (SortingAxis) {
-//		case LocationX:
-//		{
-//			return ActorRef->GetActorLocation().X;
-//		}
-//		case LocationY:
-//		{
-//			return ActorRef->GetActorLocation().Y;
-//		}
-//		case LocationZ:
-//		{
-//			return ActorRef->GetActorLocation().Z;
-//		}
-//		case RotationX:
-//		{
-//			return ActorRef->GetActorRotation().Vector().X;
-//		}
-//		case RotationY:
-//		{
-//			return ActorRef->GetActorRotation().Vector().Y;
-//		}
-//		case RotationZ:
-//		{
-//			return ActorRef->GetActorRotation().Vector().Z;
-//		}
-//		case ScaleX:
-//		{
-//			return ActorRef->GetActorScale().X;
-//		}
-//		case ScaleY:
-//		{
-//			return ActorRef->GetActorScale().Y;
-//		}
-//		case ScaleZ:
-//		{
-//			return ActorRef->GetActorScale().Z;
-//		}
-//	}
-//	return 0.0;
-//}
-//
-//int64 GetDigitAtColumn(int64 num, int32 column) {
-//	int64 DigitAtColumn = floorl(long double(num) / powl(10, double(column)));
-//	return DigitAtColumn - floorl((long double(DigitAtColumn) * 0.1)) * 10;
-//}
-//
-//TArray<AActor*> UAnalysisPluginBPLibrary::RadixSortActorsTransform(TArray<AActor*> ActorArray, FActorTransform SortingAxis, int64 accuracy)
-//{
-//	TArray<AActor*> RadixActorArray = ActorArray;
-//	TArray<AActor*> TempActorArray = ActorArray;
-//	int DigitLength = 1;
-//	
-//	int32 TotalItems = RadixActorArray.Num();
-//	long double HighestVal = 0.0;
-//	double transform = 0.0;
-//
-//	//find the highest value
-//	for (int32 i = 0; i < TotalItems; i++) {
-//
-//		transform = getTransform(RadixActorArray[i], SortingAxis);
-//		if (transform > HighestVal) {
-//			HighestVal = transform;
-//		}
-//	}
-//
-//	HighestVal = HighestVal * accuracy;
-//
-//	//find how many digits the value is
-//	while (HighestVal > 1.0) {
-//		HighestVal = HighestVal * 0.1;
-//		DigitLength++;
-//	}
-//	
-//	//the main for loop
-//	TArray<int32> RadixSortCounter;
-//	for (int ForLoop = 0; ForLoop <= DigitLength; ForLoop++) {
-//		RadixSortCounter.Empty();
-//		RadixSortCounter.SetNum(10);
-//
-//		//find how many of each digit.
-//		for (int32 j = 0; j < TotalItems; j++) {
-//			transform = getTransform(RadixActorArray[j], SortingAxis) * accuracy;
-//			RadixSortCounter[GetDigitAtColumn(int64(transform), ForLoop)] = RadixSortCounter[GetDigitAtColumn(int64(transform), ForLoop)]++;
-//		}
-//
-//		// cant remember what this does, but something important im sure
-//		for (int index = 1; index <= 9; index++) {
-//			RadixSortCounter[index] = RadixSortCounter[index] + RadixSortCounter[index - 1];
-//		}
-//
-//		//the for loop for sorting each digit into its bins
-//		for (int32 i = 0; i < TotalItems; i++) {
-//
-//			transform = getTransform(RadixActorArray[i], SortingAxis);
-//			RadixSortCounter[GetDigitAtColumn(int64(transform), ForLoop)] = RadixSortCounter[GetDigitAtColumn(int64(transform), ForLoop)]--;
-//			int32 arrayindex = RadixSortCounter[GetDigitAtColumn(int64(transform), ForLoop)];
-//			TempActorArray[arrayindex] = RadixActorArray[i];
-//		}
-//		RadixActorArray = TempActorArray;
-//	}
-//
-//	return RadixActorArray;
-//}
+//helper function to get the specific transform type requested.
+float UAnalysisPluginBPLibrary::getTransformAxis(AActor* ActorRef, FActorTransform SortingAxis) {
+	if (ActorRef->IsValidLowLevel()) {
+		switch (SortingAxis) {
+			case LocationX:
+			{
+				return ActorRef->GetActorLocation().X;
+			}
+			case LocationY:
+			{
+				return ActorRef->GetActorLocation().Y;
+			}
+			case LocationZ:
+			{
+				return ActorRef->GetActorLocation().Z;
+			}
+			case RotationX:
+			{
+				return ActorRef->GetActorRotation().Vector().X;
+			}
+			case RotationY:
+			{
+				return ActorRef->GetActorRotation().Vector().Y;
+			}
+			case RotationZ:
+			{
+				return ActorRef->GetActorRotation().Vector().Z;
+			}
+			case ScaleX:
+			{
+				return ActorRef->GetActorScale().X;
+			}
+			case ScaleY:
+			{
+				return ActorRef->GetActorScale().Y;
+			}
+			case ScaleZ:
+			{
+				return ActorRef->GetActorScale().Z;
+			}
+		}
+	}
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("object transform could not be gotten. null object"));
+	return 0.0;
+}
 
-void UAnalysisPluginBPLibrary::GetObjReferenceCount(UObject* Obj, TArray<UObject*>& OutReferencedObjects)
+int64 GetDigitAtColumn(int64 num, int64 column) {
+	int64 DigitAtColumn = floor(double(num) / powl(10, double(column)));
+	return DigitAtColumn - floor((double(DigitAtColumn) * 0.1l)) * 10;
+}
+
+template<class TypeFrom, class TypeTo>
+void UAnalysisPluginBPLibrary::CastArray(const TArray<TypeFrom*> FromObjArray, TArray<TypeTo*>& ToObjArray)
+{
+	ToObjArray.Reserve(FromObjArray.Num());
+	for (TypeFrom* FromObj : FromObjArray)
+	{
+		if (TypeTo* ToObj = Cast<TypeTo>(FromObj))
+		{
+			ToObjArray.Add(ToObj);
+		}
+	}
+}
+
+TArray<AActor*> UAnalysisPluginBPLibrary::RadixSortActorsTransform(TArray<AActor*> ActorArray, FActorTransform SortingAxis, float Accuracy)
+{
+	TArray<AActor*> RadixActorArray = ActorArray;
+	TArray<AActor*> TempActorArray = ActorArray;
+
+
+	int64 DigitLength = 0;
+	
+	int32 TotalItems = RadixActorArray.Num();
+	double HighestVal = 0.0;
+	double LowestVal = 0.0;
+	double transform = 0.0;
+
+	//find the highest and lowest value
+	for (int32 i = 0; i < TotalItems; i++) {
+
+		transform = getTransformAxis(RadixActorArray[i], SortingAxis);
+		HighestVal = FGenericPlatformMath::Max<double>(HighestVal, transform);
+		LowestVal = FGenericPlatformMath::Min<double>(HighestVal, transform);
+	}
+
+	if (LowestVal >= 0.0) {
+		LowestVal = 0.0;
+	}
+	else {
+		LowestVal = LowestVal * -1;
+	}
+
+	HighestVal = (HighestVal + LowestVal) * Accuracy;
+
+	//find how many digits the value is
+	while (HighestVal > 1.0) {
+		HighestVal = HighestVal * 0.1;
+		DigitLength++;
+	}
+	
+	//the main for loop
+	TArray<int64> RadixSortCounter;
+	for (int ForLoop = 0; ForLoop <= DigitLength; ForLoop++) {
+		RadixSortCounter.Empty();
+		RadixSortCounter.SetNum(10);
+		int64 DigAtColIndex = 0;
+
+		//find how many of each digit.
+		for (int32 j = 0; j < TotalItems; j++) {
+			transform = (getTransformAxis(RadixActorArray[j], SortingAxis) + LowestVal) * Accuracy;
+			DigAtColIndex = GetDigitAtColumn(int64(floor(transform)), ForLoop);
+			RadixSortCounter[DigAtColIndex] = RadixSortCounter[DigAtColIndex] ++;
+		}
+
+		// cant remember what this does, but something important im sure
+		for (int32 index = 1; index <= 9; index++) {
+			RadixSortCounter[index] = RadixSortCounter[index] + RadixSortCounter[index - 1];
+		}
+
+		int32 Rev = TotalItems - 1;
+		//the reverse for loop for sorting each digit into its bins
+		for (int32 i = Rev; i >= 0; i--) {
+
+			transform = (getTransformAxis(RadixActorArray[i], SortingAxis) + LowestVal) * Accuracy;
+			DigAtColIndex = GetDigitAtColumn(int64(floor(transform)), ForLoop);
+			RadixSortCounter[DigAtColIndex] = RadixSortCounter[DigAtColIndex] --;
+			int32 arrayindex = RadixSortCounter[DigAtColIndex];
+			TempActorArray[arrayindex] = RadixActorArray[i];
+		}
+
+		RadixActorArray = TempActorArray;
+	}
+
+	return RadixActorArray;
+}
+
+void UAnalysisPluginBPLibrary::GetObjReferences(UObject* Obj, TArray<UObject*>& OutReferencedObjects)
 {
 	if (!Obj || !Obj->IsValidLowLevelFast())
 	{
@@ -1603,6 +1634,8 @@ void UAnalysisPluginBPLibrary::ImportMidi(FString MidiFileLocation, FString& Err
 	{	
 		index = 9;
 		tick = 0;
+		tickDelta = 0;
+		MetaEventType = NaME;
 
 		TArray<FMidiNote> noteArray;
 
