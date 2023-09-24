@@ -68,6 +68,18 @@ enum FActorTransform
 };
 
 UENUM(BlueprintType)
+enum FVectorAxis
+{
+
+	X		UMETA(DisplayName = "X"),
+
+	Y		UMETA(DisplayName = "Y"),
+
+	Z		UMETA(DisplayName = "Z"),
+
+};
+
+UENUM(BlueprintType)
 enum FMidiFormat
 {
 
@@ -429,19 +441,22 @@ public:
 	//This uses a somewhat unoptimized radix sorting algorithm to sort actors on any transform. Unpotimized because I made it from scratch, but still way faster than the base sort function in C++. i think.
 	//@param SortingAxis - what axis you want to sort by. will sort both positive and negative numbers
 	//@param Accuracy - because transforms are floats, this allows you to dial in how accurate deep the radix sorter goes. low values like 1 or 0.1 will be faster but less accurate. high values 100 or 1000 will be slower but more accurate.
-	//@param position - acts as a change log of position swaps. this way you can swap other stuff that may be attached to the actor, but not directly contained within.
 	UFUNCTION(blueprintcallable, category = "analysis plugin | Data Stuff", displayname = "Radix sort actors transform")
 		static TArray<AActor*> RadixSortActorsTransform(TArray<AActor*> ActorArray, FActorTransform SortingAxis, float Accuracy = 1000.f);
+
+	//This uses a somewhat unoptimized radix sorting algorithm to sort vectors on x, y, or z. Unpotimized because I made it from scratch, but still way faster than the base sort function in C++. i think.
+	//@param SortingAxis - what axis you want to sort by. will sort both positive and negative numbers
+	//@param Accuracy - because Vectors are floats, this allows you to dial in how accurate deep the radix sorter goes. low values like 1 or 0.1 will be faster but less accurate. high values 100 or 1000 will be slower but more accurate.
+	UFUNCTION(blueprintcallable, category = "analysis plugin | Data Stuff", displayname = "Radix sort Vectors")
+		static TArray<FVector> RadixSortVectors(TArray<FVector> VectorArray, FVectorAxis SortingAxis, float Accuracy = 1000.f);
 
 	//A programatic way to get actor transform on a specific axis.
 	UFUNCTION(blueprintcallable, BlueprintPure, category = "analysis plugin | Data Stuff", displayname = "Get actor transform")
 		static float getTransformAxis(AActor* ActorRef, FActorTransform Axis);
-	
-	template<class TypeFrom, class TypeTo>
 
-	//allows you to cast an entire array all at once
-	UFUNCTION(blueprintcallable, category = "analysis plugin | Data Stuff", displayname = "Cast Array")
-		static void CastArray(const TArray<TypeFrom*> FromObjArray, TArray<TypeTo*>& ToObjArray);
+	//A programatic way to get a vector axis
+	UFUNCTION(blueprintcallable, BlueprintPure, category = "analysis plugin | Data Stuff", displayname = "Get Vector Axis")
+		static float getVectorAxis(FVector Vector, FVectorAxis Axis);
 
 	//Allows you to find any refernces to an object.
 	//Rama made a tutorial on this. Im just grabbing it.
