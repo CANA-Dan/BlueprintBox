@@ -16,4 +16,4 @@ Note that this plugin requires the [Audio Analysis Tools Plugin](https://github.
 ## how to install
 Grab the source and put in in your Plugins folder. If you dont have one, make one in the same folder that contains your project files/folders. this plugin will require you to build using visual studio.
 
-compatabile with UE 4.27, 5.0, 5.1, 5.2, 5.3, 5.4
+compatabile with UE 4.27, 5.0, 5.1, 5.2, 5.3, 5.4. its probably compatable with ealier than 4.27, but that is untested.
