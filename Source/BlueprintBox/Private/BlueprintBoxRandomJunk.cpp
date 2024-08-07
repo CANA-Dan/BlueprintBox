@@ -83,11 +83,11 @@ TArray<bool> UBlueprintBoxRandomJunk::SetCustomDataValues(UInstancedStaticMeshCo
 	return Ret;
 }
 
-TArray<double> UBlueprintBoxRandomJunk::SwapFloats(TArray<double> Input, double A, double B)
+TArray<float> UBlueprintBoxRandomJunk::SwapFloats(TArray<float> Input, float A, float B)
 {
-	TArray<double> Temp = Input;
+	TArray<float> Temp = Input;
 	int32 len = Temp.Num();
-	double tempVal = 0.0;
+	float tempVal = 0.0;
 	for (int32 i = 0; i < len; i++) {
 		tempVal = Temp[i];
 		if (tempVal == A) {
@@ -158,7 +158,7 @@ void FindRecursivly(TArray<FString>& FileNames, const TCHAR* StartDirectory, con
 	FindRecursivlyInternally(FileNames, StartDirectory, Filename, Files, Directories, Index);
 }
 
-void UBlueprintBoxRandomJunk::FindFilesDirectories(const FString& StartDirectory, const FString& Wildcard, const int32 RecursionAmount, bool FindFiles, bool FindDirectories, const FFilesDelegate& result)
+void UBlueprintBoxRandomJunk::FindFilesDirectories(UBlueprintBoxCore* CoreRef, const FString& StartDirectory, const FString& Wildcard, const int32 RecursionAmount, bool FindFiles, bool FindDirectories, const FFilesDelegate& result)
 {
 
 	TArray<FString> FoundFiles;
@@ -172,9 +172,9 @@ void UBlueprintBoxRandomJunk::FindFilesDirectories(const FString& StartDirectory
 		WildcardTemp = TEXT("*.*");
 	}
 
-	AsyncTask(ENamedThreads::AnyThread, [this, StartDirectory, WildcardTemp, FindFiles, FindDirectories, FoundFiles, Status, result, ret, RecursionAmount]() mutable {
+	AsyncTask(ENamedThreads::AnyThread, [CoreRef, StartDirectory, WildcardTemp, FindFiles, FindDirectories, FoundFiles, Status, result, ret, RecursionAmount]() mutable {
 
-		if (!(this->IsValidLowLevel())) {
+		if (!(CoreRef->IsValidLowLevel())) {
 
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("pointer is invalid"));
 			ret.Status = BadObjRefernce;
@@ -384,7 +384,7 @@ TArray<int32> UBlueprintBoxRandomJunk::BoxOverlap(const TArray<FTransform>& Tran
 	return Result;
 }
 
-bool UBlueprintBoxRandomJunk::IsWithinSphere(double Radius, FVector Center, FVector Point) {
+bool UBlueprintBoxRandomJunk::IsWithinSphere(float Radius, FVector Center, FVector Point) {
 	
 	FVector delta = Center - Point;
 	delta = FMath::Square(delta);
@@ -397,9 +397,9 @@ bool UBlueprintBoxRandomJunk::IsWithinSphere(double Radius, FVector Center, FVec
 	return false;
 }
 
-
+//all three functions below are pulled from the Simple noise generators plugin, but its using a bad random value algorithum, and it doesnt provide very accurate prelin noise at high scales
 //Perlin Noise 1D
-double UBlueprintBoxRandomJunk::PerlinNoise1D(double X, double Scale, int32 Seed)
+float UBlueprintBoxRandomJunk::PerlinNoise1D(float X, float Scale, int32 Seed)
 {
 	if (Scale <= 0.f) Scale = 0.01f;
 	if (X == 0.f) X = 0.01f;
@@ -417,7 +417,7 @@ double UBlueprintBoxRandomJunk::PerlinNoise1D(double X, double Scale, int32 Seed
 	return NoiseValue;
 }
 
-double UBlueprintBoxRandomJunk::PerlinNoise2D(double X, double Y, double Scale, int32 Seed)
+float UBlueprintBoxRandomJunk::PerlinNoise2D(float X, float Y, float Scale, int32 Seed)
 {
 	// Ensure non-zero values
 	if (Scale <= 0.0) Scale = 0.001;
@@ -440,7 +440,7 @@ double UBlueprintBoxRandomJunk::PerlinNoise2D(double X, double Y, double Scale, 
 }
 
 //Perlin Noise 3D
-double UBlueprintBoxRandomJunk::PerlinNoise3D(double X, double Y, double Z, double Scale, int32 Seed)
+float UBlueprintBoxRandomJunk::PerlinNoise3D(float X, float Y, float Z, float Scale, int32 Seed)
 {
 	// Ensure non-zero values
 	if (Scale <= 0.0) Scale = 0.001;

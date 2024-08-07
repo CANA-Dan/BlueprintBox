@@ -20,10 +20,10 @@ void UBlueprintBoxCore::DoneCalculatingFFT_Internal(FSpectrogramOutput output, U
 
 			bool bBroadcasted{ false };
 
-			if (Ref->DoneCalculating.IsBound())
+			if (Ref->DoneCalculatingFFT.IsBound())
 			{
 				bBroadcasted = true;
-				Ref->DoneCalculating.Broadcast(output);
+				Ref->DoneCalculatingFFT.Broadcast(output);
 			}
 
 			if (!bBroadcasted)

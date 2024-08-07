@@ -125,14 +125,14 @@ public:
 	//@param ChunkIndex - What index you wish to calculate and generate. This variable should be thread specific.
 	//@param ThreadId - Allows you to give the thread calculation offset so that chunks can be generated correctly. Set 0 for a single thread.
 	UFUNCTION(BlueprintCallable, Category = "Blueprint Box | Audio Analysis", DisplayName = "(Internal) Make Spectrogram Color Array")
-	static void MakeSpectrogramColorArray(FSpectrogramInput SpectrogramValues, const int32 ChunkIndex, const int32 ThreadId, TEnumAsByte<FGenerationStatus>& ContinueLooping, TArray<FColor>& color);
+	static void MakeSpectrogramColorArray(FSpectrogramInput SpectrogramValues, const int32 ChunkIndex, const int32 ThreadId, TEnumAsByte<FGenerationStatus>& ContinueLooping, TArray<uint8>& color);
 
 	///Generates an array of pixels (one second per chunk). Intended to be turned into a texture. Used internaly for "Calculate Spectrogram Async", but avalible to the user in blueprints.
 	//@param WaveformValues - Input nodes for the waveform. Allows you to simplify your setup when it comes to making a thread pool. Best to leave these as constant values once the waveform is generating.
 	//@param ChunkIndex - What index you wish to calculate and generate. This variable should be thread specific.
 	//@param ThreadId - Allows you to give the thread calculation offset so that chunks can be generated correctly. Set 0 for a single thread.
 	UFUNCTION(BlueprintCallable, Category = "Blueprint Box | Audio Analysis", DisplayName = "(Internal) Make Waveform Color Array")
-	static void MakeWaveformColorArray(FWaveformInput WaveformValues, const int32 ChunkIndex, const int32 ThreadId, TEnumAsByte<FGenerationStatus>& ContinueLooping, TArray<FColor>& color);
+	static void MakeWaveformColorArray(FWaveformInput WaveformValues, const int32 ChunkIndex, const int32 ThreadId, TEnumAsByte<FGenerationStatus>& ContinueLooping, TArray<uint8>& color);
 
 	//Allows you to generate a spectrogram texture asynchronously. Take a look on my github for how to set this up (or make a thread pool)
 	//Make sure that you leave, at minimum, 1 thread (for the game thread) in order for things to work smoothly in the background. 2 is much more ideal, as it leaves one for your OS.
@@ -146,6 +146,6 @@ public:
 	//@param ChunkIndex - Plug 'Output Chunk Index' that you get from the delegate back in here if you intend to loop across the entire song
 	//@param ThreadId - Allows you to give the thread calculation offset so that chunks can be generated correctly.
 	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Audio Analysis", DisplayName = "Calculate Spectrogram Async"))
-	virtual void CalculateSpectrogramAsync(FGenerationType type, FWaveformInput WaveformInput, FSpectrogramInput SpectrogramInput, int32 ChunkIndex, int32 ThreadID);
+	static void CalculateSpectrogramAsync(UBlueprintBoxCore* CoreRef, FGenerationType type, FWaveformInput WaveformInput, FSpectrogramInput SpectrogramInput, int32 ChunkIndex, int32 ThreadID);
 
 };

@@ -112,7 +112,7 @@ float clampRange(const float Input, const float MaxVal, const float MinVal) {
 //Using LowEntryExtendedStandardLibrary's functions for this. it worked super well in blueprints and i wanted to use it again here in C++.
 UTexture2D* DataToTexture2D(int32 Width, int32 Height, const void* Src, SIZE_T Count)
 {
-	UTexture2D* Texture2D = UTexture2D::CreateTransient(Width, Height, EPixelFormat::PF_B8G8R8A8);
+	UTexture2D* Texture2D = UTexture2D::CreateTransient(Width, Height, EPixelFormat::PF_R8);
 	if (Texture2D == nullptr)
 	{
 		return NULL;
@@ -123,24 +123,36 @@ UTexture2D* DataToTexture2D(int32 Width, int32 Height, const void* Src, SIZE_T C
 	Texture2D->MipGenSettings = TMGS_NoMipmaps;
 #endif
 
+#if (ENGINE_MAJOR_VERSION == 4)
+	void* TextureData = Texture2D->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+	FMemory::Memcpy(TextureData, Src, Count);
+	Texture2D->PlatformData->Mips[0].BulkData.Unlock();
+
+	Texture2D->UpdateResource();
+	return Texture2D;
+#endif
+
+#if (ENGINE_MAJOR_VERSION == 5)
 	void* TextureData = Texture2D->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
 	FMemory::Memcpy(TextureData, Src, Count);
 	Texture2D->GetPlatformData()->Mips[0].BulkData.Unlock();
 
 	Texture2D->UpdateResource();
 	return Texture2D;
+#endif
+
 }
 
-UTexture2D* PixelsToTexture2D(const int32 Width, const int32 Height, const TArray<FColor>& Pixels)
+UTexture2D* CreateGrayScaleTexture(const int32 Width, const int32 Height, const TArray<uint8>& Pixels)
 {
 	if ((Pixels.Num() <= 0) || (Width <= 0) || (Height <= 0))
 	{
 		return NULL;
 	}
-	return DataToTexture2D(Width, Height, &Pixels[0], Pixels.Num() * sizeof(FColor));
+	return DataToTexture2D(Width, Height, &Pixels[0], Pixels.Num());
 }
 
-void UBlueprintBoxFFT::MakeSpectrogramColorArray(FSpectrogramInput SpectrogramValues, const int32 ChunkIndex, const int32 ThreadId, TEnumAsByte<FGenerationStatus>& ContinueLooping, TArray<FColor>& color) {
+void UBlueprintBoxFFT::MakeSpectrogramColorArray(FSpectrogramInput SpectrogramValues, const int32 ChunkIndex, const int32 ThreadId, TEnumAsByte<FGenerationStatus>& ContinueLooping, TArray<uint8>& color) {
 
 	ContinueLooping = FGenerationStatus::DontLoop;
 
@@ -188,7 +200,7 @@ void UBlueprintBoxFFT::MakeSpectrogramColorArray(FSpectrogramInput SpectrogramVa
 	//creates the chunk size and length in samples
 	int32 firstIndex = ThreadLocation * SpectrogramSamples;
 	int32 lastIndex = (ThreadLocation + 1) * SpectrogramSamples;
-	TArray<FColor> Pixels;
+	TArray<uint8> Pixels;
 
 	int32 whileLength = TextureWidth * TextureHeight;
 	for (int32 Chunkpart = firstIndex; Chunkpart <= lastIndex; Chunkpart++) {
@@ -221,13 +233,8 @@ void UBlueprintBoxFFT::MakeSpectrogramColorArray(FSpectrogramInput SpectrogramVa
 		else {
 
 			while (Pixels.Num() - 1 < whileLength) {
-				FColor CurrentPixel;
-				CurrentPixel.R = 0;
-				CurrentPixel.G = 0;
-				CurrentPixel.B = 0;
-				CurrentPixel.A = 255;
 
-				Pixels.Add(CurrentPixel);
+				Pixels.Add(0);
 			}
 
 			ContinueLooping = FGenerationStatus::Loop;
@@ -260,12 +267,7 @@ void UBlueprintBoxFFT::MakeSpectrogramColorArray(FSpectrogramInput SpectrogramVa
 
 						float MainSpectrogramVal = clampRange(MainSpectrogram[FrequencyIndex], 10.f, 0.0f);
 
-						FColor CurrentPixel;
-						int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
-						CurrentPixel.R = colorVal;
-						CurrentPixel.G = colorVal;
-						CurrentPixel.B = colorVal;
-						CurrentPixel.A = 255;
+						uint8 CurrentPixel = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
 						Pixels.Add(CurrentPixel);
 
 					}
@@ -301,12 +303,7 @@ void UBlueprintBoxFFT::MakeSpectrogramColorArray(FSpectrogramInput SpectrogramVa
 
 						float MainSpectrogramVal = clampRange(MainSpectrogram[FrequencyIndex], 10.f, 0.0f);
 
-						FColor CurrentPixel;
-						int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
-						CurrentPixel.R = colorVal;
-						CurrentPixel.G = colorVal;
-						CurrentPixel.B = colorVal;
-						CurrentPixel.A = 255;
+						uint8 CurrentPixel = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
 						Pixels.Add(CurrentPixel);
 
 					}
@@ -334,12 +331,7 @@ void UBlueprintBoxFFT::MakeSpectrogramColorArray(FSpectrogramInput SpectrogramVa
 
 						float MainSpectrogramVal = clampRange(MainSpectrogram[FrequencyIndex], 10.f, 0.0f);
 
-						FColor CurrentPixel;
-						int colorVal = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
-						CurrentPixel.R = colorVal;
-						CurrentPixel.G = colorVal;
-						CurrentPixel.B = colorVal;
-						CurrentPixel.A = 255;
+						uint8 CurrentPixel = round(clampRange(MainSpectrogramVal * 50.f, 255.f, 0.f));
 						Pixels.Add(CurrentPixel);
 
 					}
@@ -364,7 +356,7 @@ void UBlueprintBoxFFT::MakeSpectrogramColorArray(FSpectrogramInput SpectrogramVa
 	return;
 }
 
-void UBlueprintBoxFFT::MakeWaveformColorArray(FWaveformInput WaveformValues, const int32 ChunkIndex, const int32 ThreadId, TEnumAsByte<FGenerationStatus>& ContinueLooping, TArray<FColor>& color)
+void UBlueprintBoxFFT::MakeWaveformColorArray(FWaveformInput WaveformValues, const int32 ChunkIndex, const int32 ThreadId, TEnumAsByte<FGenerationStatus>& ContinueLooping, TArray<uint8>& color)
 {
 	ContinueLooping = FGenerationStatus::DontLoop;
 
@@ -387,15 +379,11 @@ void UBlueprintBoxFFT::MakeWaveformColorArray(FWaveformInput WaveformValues, con
 	int32 textureWidth = WaveformValues.WaveformAudioGranularity;
 	int32 WaveformChunk = (ChunkIndex * WaveformValues.ThreadCount) + ThreadId;
 
-	TArray<FColor> Pixels;
-	FColor WhitePixel;
-	WhitePixel.R = 255;
-	WhitePixel.G = 255;
-	WhitePixel.B = 255;
-	WhitePixel.A = 255;
-	TArray<FColor> CleanPixels;
+	TArray<uint8> Pixels;
+	uint8 WhitePixel = 255;
+	TArray<uint8> CleanPixels;
 	CleanPixels.SetNumZeroed(textureWidth);
-	TArray<FColor> TempPixels;
+	TArray<uint8> TempPixels;
 
 	//keeps you from doing this in the loop. allows you to convert the waveform from 0 and 2 to 0 and 1.
 	float halfTextureWidth = float(textureWidth) * 0.5f;
@@ -473,11 +461,11 @@ void UBlueprintBoxFFT::MakeWaveformColorArray(FWaveformInput WaveformValues, con
 }
 
 //this function is on the secondary thread.
-void UBlueprintBoxFFT::CalculateSpectrogramAsync(FGenerationType type, FWaveformInput WaveformInput, FSpectrogramInput SpectrogramInput, int32 ChunkIndex, int32 ThreadID) {
+void UBlueprintBoxFFT::CalculateSpectrogramAsync(UBlueprintBoxCore* CoreRef, FGenerationType type, FWaveformInput WaveformInput, FSpectrogramInput SpectrogramInput, int32 ChunkIndex, int32 ThreadID) {
 
 
 	FSpectrogramOutput TempOutput;
-	UBlueprintBoxCore* ref = this;
+	UBlueprintBoxCore* ref = CoreRef;
 
 	if (!(SpectrogramInput.AudioAnalysisObject.GetEvenIfUnreachable()->IsValidLowLevel() && SpectrogramInput.ImportedSoundWave.GetEvenIfUnreachable()->IsValidLowLevel() && ref->IsValidLowLevel()) ||
 		!(WaveformInput.AudioAnalysisObject.GetEvenIfUnreachable()->IsValidLowLevel() && WaveformInput.ImportedSoundWave.GetEvenIfUnreachable()->IsValidLowLevel() && ref->IsValidLowLevel())) {
@@ -502,7 +490,7 @@ void UBlueprintBoxFFT::CalculateSpectrogramAsync(FGenerationType type, FWaveform
 			}
 
 			TEnumAsByte<FGenerationStatus> ContinueLooping;
-			TArray<FColor> color;
+			TArray<uint8> color;
 			UImportedSoundWave* audio = WaveformInput.ImportedSoundWave.GetEvenIfUnreachable();
 
 			TempOutput.Time = ((ChunkIndex + 1) * WaveformInput.ThreadCount) + (ThreadID - WaveformInput.ThreadCount + 1);
@@ -523,12 +511,12 @@ void UBlueprintBoxFFT::CalculateSpectrogramAsync(FGenerationType type, FWaveform
 			//regardless, im not gaining or losing any data by doing this method, so it doesnt matter overall.
 			color.SetNumZeroed(height * width);
 			TempOutput.Status = ContinueLooping;
-			TArray<FColor> ColorArray = color;
+			TArray<uint8> ColorArray = color;
 
 			//tried very hard to make this texture creation stuff async. Wasnt able to in the end.
-			AsyncTask(ENamedThreads::GameThread, [height, width, tempChunkIndex, ref, TempOutput, ColorArray]() mutable {
+			AsyncTask(ENamedThreads::GameThread, [height, width, tempChunkIndex, ref, TempOutput, ColorArray, ThreadID]() mutable {
 				if (ColorArray.Num() > 0) {
-					TempOutput.Texture = PixelsToTexture2D(height, width, ColorArray);
+					TempOutput.Texture = CreateGrayScaleTexture(height, width, ColorArray);
 					TempOutput.ChunkIndex = tempChunkIndex;
 				}
 				else {
@@ -541,6 +529,7 @@ void UBlueprintBoxFFT::CalculateSpectrogramAsync(FGenerationType type, FWaveform
 					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("MyLibRef is valid"));
 				}
 
+				TempOutput.ThreadID = ThreadID;
 				ref->DoneCalculatingFFT_Internal(TempOutput, ref);
 				return;
 				});
@@ -560,7 +549,7 @@ void UBlueprintBoxFFT::CalculateSpectrogramAsync(FGenerationType type, FWaveform
 			}
 
 			TEnumAsByte<FGenerationStatus> ContinueLooping;
-			TArray<FColor> color;
+			TArray<uint8> color;
 			UImportedSoundWave* audio = SpectrogramInput.ImportedSoundWave.GetEvenIfUnreachable();
 
 			TempOutput.Time = ((ChunkIndex + 1) * SpectrogramInput.ThreadCount) + (ThreadID - SpectrogramInput.ThreadCount + 1);
@@ -581,19 +570,20 @@ void UBlueprintBoxFFT::CalculateSpectrogramAsync(FGenerationType type, FWaveform
 			//regardless, im not gaining or losing any data by doing this method, so it doesnt matter overall.
 			color.SetNumZeroed(height * width);
 			TempOutput.Status = ContinueLooping;
-			TArray<FColor> ColorArray = color;
+			TArray<uint8> ColorArray = color;
 
 			//tried very hard to make this texture creation stuff async. Wasnt able to in the end.
-			AsyncTask(ENamedThreads::GameThread, [height, width, tempChunkIndex, ref, TempOutput, ColorArray]() mutable {
+			AsyncTask(ENamedThreads::GameThread, [height, width, tempChunkIndex, ref, TempOutput, ColorArray, ThreadID]() mutable {
 				if (ColorArray.Num() > 0) {
-					TempOutput.Texture = PixelsToTexture2D(width, height, ColorArray);
+					TempOutput.Texture = CreateGrayScaleTexture(width, height, ColorArray);
 					TempOutput.ChunkIndex = tempChunkIndex;
 				}
 				else {
 					TempOutput.Status = FGenerationStatus::InvalidObject;
 					TempOutput.ChunkIndex = tempChunkIndex;
 				}
-
+				
+				TempOutput.ThreadID = ThreadID;
 				ref->DoneCalculatingFFT_Internal(TempOutput, ref);
 				return;
 				});

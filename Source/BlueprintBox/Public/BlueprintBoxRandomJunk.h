@@ -57,7 +57,7 @@ public:
 	//allows you to flip the values of in an array of floats
 	//if A is found it will be swapped with B, vice-versa
 	UFUNCTION(BlueprintCallable, Category = "Blueprint Box | Random Junk", DisplayName = "Swap Floats")
-	static TArray<double> SwapFloats(TArray<double> Input, double A, double B);
+	static TArray<float> SwapFloats(TArray<float> Input, float A, float B);
 
 	//Forefully Allows you to mark objects for deletion.
 	//If the object is in use by the render thread forcefully deleting can cause issues or crashing, so use this only when you are sure the object is no longer being visually referenced.
@@ -80,7 +80,7 @@ public:
 	//@param FindFiles - Whether or not to find files
 	//@param FindDirectories - Whether or not to find directories
 	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Find Files/Directories", Latent))
-	virtual void FindFilesDirectories(const FString& StartDirectory, const FString& Wildcard, const int32 RecursionAmount, bool FindFiles, bool FindDirectories, const FFilesDelegate& result);
+	static void FindFilesDirectories(UBlueprintBoxCore* CoreRef, const FString& StartDirectory, const FString& Wildcard, const int32 RecursionAmount, bool FindFiles, bool FindDirectories, const FFilesDelegate& result);
 
 	//Converts your screenspace mouse position into a world space position along the horizontal plane.
 	//@param Height - the height off the horizontal plane.
@@ -106,20 +106,18 @@ public:
 	//@param Center - the center point of the sphere.
 	//@param Point - the point you'd like to check
 	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Is Within Sphere"))
-	static bool IsWithinSphere(double Radius, FVector Center, FVector Point);
+	static bool IsWithinSphere(float Radius, FVector Center, FVector Point);
 
 	//a smoothed perlin noise 1D function
 	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Perlin Noise 1D"))
-	static double PerlinNoise1D(double X, double Scale, int32 Seed);
+	static float PerlinNoise1D(float X, float Scale, int32 Seed);
 
 	//a smoothed perlin noise 2D function
 	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Perlin Noise 2D"))
-	static double PerlinNoise2D(double X, double Y, double Scale, int32 Seed);
+	static float PerlinNoise2D(float X, float Y, float Scale, int32 Seed);
 
 	//a smoothed perlin noise 3D function
 	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Perlin Noise 3D"))
-	static double PerlinNoise3D(double X, double Y, double Z, double Scale, int32 Seed);
-
-	private:
-
+	static float PerlinNoise3D(float X, float Y, float Z, float Scale, int32 Seed);
+ 
 };

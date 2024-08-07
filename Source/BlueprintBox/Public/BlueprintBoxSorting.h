@@ -79,11 +79,11 @@ public:
 	static void CompareStringArrays(TArray<FString> ArrayA, TArray<FString> ArrayB, TArray<FString>& DiffA, TArray<FString>& DiffB, TArray<FString>& Parity);
 
 	//A programatic way to get actor transform on a specific axis.
-	UFUNCTION(blueprintcallable, BlueprintPure, category = "Blueprint Box | Sorting", displayname = "Get actor axis")
+	UFUNCTION(blueprintcallable, BlueprintPure, category = "Blueprint Box | Sorting", displayname = "Get Actor axis")
 	static float getActorAxis(AActor* ActorRef, FActorTransform Axis);
 
 	//A programatic way to get transform on a specific axis.
-	UFUNCTION(blueprintcallable, BlueprintPure, category = "Blueprint Box | Sorting", displayname = "Get transform axis")
+	UFUNCTION(blueprintcallable, BlueprintPure, category = "Blueprint Box | Sorting", displayname = "Get Transform axis")
 	static float getTransformAxis(FTransform Transform, FActorTransform SortingAxis);
 
 	//A programatic way to get a vector axis

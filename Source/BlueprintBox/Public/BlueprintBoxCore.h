@@ -26,6 +26,9 @@ struct FSpectrogramOutput
 	UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "Stick back into the function"))
 	int32 ChunkIndex;
 
+	UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "Stick back into the function"))
+	int32 ThreadID;
+
 	UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "Where in the song this particular chunk is representing in seconds", DisplayName = "Time (Seconds)"))
 	int32 Time;
 
@@ -45,7 +48,7 @@ class BLUEPRINTBOX_API UBlueprintBoxCore : public UBlueprintFunctionLibrary
 public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Blueprint Box | Audio Analysis")
-	FGeneratedTextures DoneCalculating;
+	FGeneratedTextures DoneCalculatingFFT;
 
 	//Used for multithreading a veriety of functions. Its EXTREMELY important that you turn this into an object reference.
 	//Otherwise, GC may come along and wipe this, thinking its not in use (even tho it is).

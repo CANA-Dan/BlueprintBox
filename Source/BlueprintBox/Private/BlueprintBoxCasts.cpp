@@ -3,7 +3,7 @@
 #pragma once
 #include "BlueprintBoxCasts.h"
 
-TSet<FString> UBlueprintBoxCasts::StringToSet(TArray<FString> A)
+TSet<FString> UBlueprintBoxCasts::StringArrayToSet(TArray<FString> A)
 {
 	TSet<FString> Set;
 	for (const FString& Element : A) {
@@ -13,7 +13,7 @@ TSet<FString> UBlueprintBoxCasts::StringToSet(TArray<FString> A)
 	return Set;
 }
 
-TSet<int32> UBlueprintBoxCasts::IntToSet(TArray<int32> A)
+TSet<int32> UBlueprintBoxCasts::IntArrayToSet(TArray<int32> A)
 {
 	TSet<int32> Set;
 	for (const int32& Element : A) {
@@ -23,7 +23,7 @@ TSet<int32> UBlueprintBoxCasts::IntToSet(TArray<int32> A)
 	return Set;
 }
 
-TArray<int32> UBlueprintBoxCasts::SetToInt(TSet<int32> A)
+TArray<int32> UBlueprintBoxCasts::SetToIntArray(TSet<int32> A)
 {
 	return A.Array();
 }
@@ -54,8 +54,7 @@ TArray<FTransform> UBlueprintBoxCasts::LocAndScaleToTransform(TArray<FVector> Lo
 	TArray<FTransform> Transforms;
 	Transforms.SetNumUninitialized(size);
 
-	int32 len = Locations.Num();
-	for (int i = 0; i < len; i++) {
+	for (int i = 0; i < size; i++) {
 
 		Transforms[i] = FTransform(DefaultRotation, Loc[i], Sca[i]);
 	}

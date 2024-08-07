@@ -218,7 +218,7 @@ public:
 	static void ImportBinaryFromDisk(FString Path, TArray<uint8>& ArrayOfBytes, FString& ErrorLog);
 
 	//Allows you to convert an array of bytes into its higher value int counterparts.
-	//If you want something like a 16 bit int, then give only 2 bytes. intended to be used up to 56 bit numbers)
+	//If you want something like a 16 bit int, then give only 2 bytes. intended to be used up to 56 bit numbers
 	//@param BigEndian - BigEndian is also known as motorola format. Reads the bytes from left to right. Set false to read bytes from right to left (intel format/LittleEndian).
 	//@param Signed - Allows you to specifiy if you want the value signed or not. Unsigned means the value returned will always be positive. Signed means that values will overflow properly. If you dont know what you are doing, leave this as false.
 	UFUNCTION(BlueprintCallable, Category = "Blueprint Box | MIDI Importing", DisplayName = "(Internal) Byte Array To Int")
@@ -264,7 +264,7 @@ public:
 	//@param NewIndex - The index of the next piece of data, likely the tick delta function.
 	//@param DataReturn - The data to return. If the type being returned is System Exclusive, more processing will need to take place as this is custom length data. Meta Events are static sized, but special in their nature. use the Get Meta Events plugin to decode them.
 	//@param NewIndex - The index of the next piece of data.
-	UFUNCTION(BlueprintCallable, Category = "Blueprint Box | MIDI Importing", DisplayName = "(Internal) GetSystem Message")
+	UFUNCTION(BlueprintCallable, Category = "Blueprint Box | MIDI Importing", DisplayName = "(Internal) Get System Message")
 	static void GetSysMessage(const TArray<uint8> ArrayOfBytes, const int32 StartIndex, TEnumAsByte<FMidiSysMessages>& DataType, TArray<uint8>& DataReturn, int32& NewIndex);
 
 	//these Events will be stuff like text, bpm changes, lyrics, offset, ect.
