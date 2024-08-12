@@ -32,7 +32,7 @@ struct FSpectrogramOutput
 	UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "Where in the song this particular chunk is representing in seconds", DisplayName = "Time (Seconds)"))
 	int32 Time;
 
-	UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The texture for this chunk"))
+	UPROPERTY(BlueprintReadWrite, meta = (ToolTip = "The texture for this chunk. set to linear greyscale to use in a material"))
 	TWeakObjectPtr<UTexture2D> Texture;
 
 };

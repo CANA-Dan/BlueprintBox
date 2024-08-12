@@ -18,6 +18,25 @@ enum FFindFileSucess
 
 };
 
+UENUM(BlueprintType)
+enum FTextureType
+{
+	//Alignment is 4x8, BGRA
+	Color,
+
+	//Alignment is 1x8, A. Optimal for greyscale images.
+	Alpha,
+};
+
+UENUM(BlueprintType)
+enum FMathType
+{
+	Add,
+	Subtract,
+	Multiply,
+	Divide,
+};
+
 //Used for the async file finding function.
 USTRUCT(BlueprintType)
 struct FFilesReturn
@@ -29,6 +48,20 @@ struct FFilesReturn
 
 	UPROPERTY(BlueprintReadWrite)
 	TEnumAsByte<FFindFileSucess> Status;
+
+};
+
+//Allows you to describe the type of math you want to do
+USTRUCT(BlueprintType)
+struct FMathOperation
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	TEnumAsByte<FMathType> Type;
+
+	UPROPERTY(BlueprintReadWrite)
+	float Value;
 
 };
 
@@ -101,23 +134,36 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Box Overlap Detection"))
 	static TArray<int32> BoxOverlap(const TArray<FTransform>& Transforms, const FBox& Box);
 
+
 	//detects if a point is within a sphere.
 	//@param Radius - Radius in cm.
 	//@param Center - the center point of the sphere.
 	//@param Point - the point you'd like to check
-	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Is Within Sphere"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Is Within Sphere"))
 	static bool IsWithinSphere(float Radius, FVector Center, FVector Point);
 
-	//a smoothed perlin noise 1D function
-	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Perlin Noise 1D"))
+	//A smoothed perlin noise 1D function
+	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Perlin Noise 1D"))
 	static float PerlinNoise1D(float X, float Scale, int32 Seed);
 
-	//a smoothed perlin noise 2D function
-	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Perlin Noise 2D"))
+	//A smoothed perlin noise 2D function
+	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Perlin Noise 2D"))
 	static float PerlinNoise2D(float X, float Y, float Scale, int32 Seed);
 
-	//a smoothed perlin noise 3D function
-	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Perlin Noise 3D"))
+	//A smoothed perlin noise 3D function
+	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Perlin Noise 3D"))
 	static float PerlinNoise3D(float X, float Y, float Z, float Scale, int32 Seed);
+
+	//allows you to do math ith no overhead. doesnt have any simd optimizations, but it will remove any overhead from the use of a for loop in 
+	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Array Math (Int)"))
+	static void ArrayMathInt(const TArray<int32> Input, const TArray<FMathOperation> MathTypes, TArray<int32>& Return);
+
+	//allows you to do math ith no overhead. doesnt have any simd optimizations, but it will remove any overhead from the use of a for loop in 
+	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Array Math (Int64)"))
+	static void ArrayMathInt64(const TArray<int64> Input, const TArray<FMathOperation> MathTypes, TArray<int64>& Return);
+
+	//allows you to do math ith no overhead. doesnt have any simd optimizations, but it will remove any overhead from the use of a for loop in 
+	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Array Math (Int64)"))
+	static void ArrayMathfloat(const TArray<float> Input, const TArray<FMathOperation> MathTypes, TArray<float>& Return);
  
 };

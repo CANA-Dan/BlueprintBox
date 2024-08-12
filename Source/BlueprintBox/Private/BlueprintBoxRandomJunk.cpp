@@ -464,3 +464,87 @@ float UBlueprintBoxRandomJunk::PerlinNoise3D(float X, float Y, float Z, float Sc
 
 	return NoiseValue;
 }
+
+void UBlueprintBoxRandomJunk::ArrayMathInt(const TArray<int32> Input, const TArray<FMathOperation> MathTypes, TArray<int32>& Return)
+{
+	TArray<int32> ReturnArray;
+	ReturnArray.Reserve(Input.Num());
+
+	for (int32 i = 0; i < Input.Num(); i++) {
+		int32 Value = Input[i];
+		for (FMathOperation Type : MathTypes) {
+			switch (Type.Type) {
+				case Add:
+					Value = int32(Value + Type.Value);
+					break;
+				case Subtract:
+					Value = int32(Value - Type.Value);
+					break;
+				case Multiply:
+					Value = int32(Value * Type.Value);
+					break;
+				case Divide:
+					Value = int32(Value / Type.Value);
+					break;
+			}
+		}
+		ReturnArray[i] = Value;
+	}
+	Return = ReturnArray;
+}
+
+void UBlueprintBoxRandomJunk::ArrayMathInt64(const TArray<int64> Input, const TArray<FMathOperation> MathTypes, TArray<int64>& Return)
+{
+	TArray<int64> ReturnArray;
+	ReturnArray.Reserve(Input.Num());
+
+	for (int32 i = 0; i < Input.Num(); i++) {
+		int32 Value = Input[i];
+		for (FMathOperation Type : MathTypes) {
+			switch (Type.Type) {
+			case Add:
+				Value = int64(Value + Type.Value);
+				break;
+			case Subtract:
+				Value = int64(Value - Type.Value);
+				break;
+			case Multiply:
+				Value = int64(Value * Type.Value);
+				break;
+			case Divide:
+				Value = int64(Value / Type.Value);
+				break;
+			}
+		}
+		ReturnArray[i] = Value;
+	}
+	Return = ReturnArray;
+}
+
+void UBlueprintBoxRandomJunk::ArrayMathfloat(const TArray<float> Input, const TArray<FMathOperation> MathTypes, TArray<float>& Return)
+{
+	TArray<float> ReturnArray;
+	ReturnArray.Reserve(Input.Num());
+
+	for (int32 i = 0; i < Input.Num(); i++) {
+		int32 Value = Input[i];
+		for (FMathOperation Type : MathTypes) {
+			switch (Type.Type) {
+			case Add:
+				Value = Value + Type.Value;
+				break;
+			case Subtract:
+				Value = Value - Type.Value;
+				break;
+			case Multiply:
+				Value = Value * Type.Value;
+				break;
+			case Divide:
+				Value = Value / Type.Value;
+				break;
+			}
+		}
+		ReturnArray[i] = Value;
+	}
+	Return = ReturnArray;
+}
