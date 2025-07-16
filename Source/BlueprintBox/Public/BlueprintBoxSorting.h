@@ -70,6 +70,13 @@ public:
 	UFUNCTION(blueprintcallable, category = "Blueprint Box | Sorting", displayname = "Radix sort Vectors")
 	static void RadixSortVectors(TArray<FVector> VectorArray, FVectorAxis SortingAxis, TArray<FVector>& SortedItems, TArray<int32>& NewIndexes, float Accuracy = 1000.f);
 
+	//This uses a somewhat unoptimized radix sorting algorithm to sort Transforms. Unpotimized because I made it from scratch, but still way faster than the base sort function in C++. i think.
+	//@param SortingAxis - what axis you want to sort by. will sort both positive and negative numbers
+	//@param Accuracy - because Vectors are floats, this allows you to dial in how accurate deep the radix sorter goes. low values like 1 or 0.1 will be faster but less accurate. high values 100 or 1000 will be slower but more accurate.
+	//@param NewIndexes - returns the new indexes. allows you to translate any other data accompanying the input vector
+	UFUNCTION(blueprintcallable, category = "Blueprint Box | Sorting", displayname = "Radix sort Vectors")
+	static void RadixSortTransforms(TArray<FTransform> VectorArray, FActorTransform SortingAxis, TArray<FTransform>& SortedItems, TArray<int32>& NewIndexes, float Accuracy = 1000.f);
+
 	//Give two string arrays in, and get two string arrays out, each one will contain what is missing from the other.
 	//For example ["red", "yellow", "orange", "green", "pink"], ["orange", "red", "blue", "green"] would return ["yellow", "pink"], ["blue"]
 	//@param DiffA - returns only the things contained in Array A

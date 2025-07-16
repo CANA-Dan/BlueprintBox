@@ -369,6 +369,87 @@ void UBlueprintBoxSorting::RadixSortVectors(TArray<FVector> VectorArray, FVector
 	NewIndexes = TempIndexArr;
 }
 
+void UBlueprintBoxSorting::RadixSortTransforms(TArray<FTransform> TransformArray, FActorTransform SortingAxis, TArray<FTransform>& SortedItems, TArray<int32>& NewIndexes, float Accuracy)
+{
+	TArray<FTransform> RadixVectorArray = TransformArray;
+	TArray<FTransform> TempVectorArray = TransformArray;
+	TArray<int32> NewIndexArr;
+	TArray<int32> TempIndexArr;
+	NewIndexArr.SetNumUninitialized(TempVectorArray.Num());
+
+	int64 DigitLength = 0;
+
+	int32 TotalItems = RadixVectorArray.Num();
+	double HighestVal = 0.0;
+	double LowestVal = 0.0;
+	double transform = 0.0;
+
+	//find the highest and lowest value
+	for (int32 i = 0; i < TotalItems; i++) {
+		NewIndexArr[i] = i;
+		transform = getTransformAxis(RadixVectorArray[i], SortingAxis);
+		HighestVal = FGenericPlatformMath::Max<double>(HighestVal, transform);
+		LowestVal = FGenericPlatformMath::Min<double>(HighestVal, transform);
+	}
+
+	TempIndexArr = NewIndexArr;
+
+	if (LowestVal >= 0.0) {
+		LowestVal = 0.0;
+	}
+	else {
+		LowestVal = LowestVal * -1;
+	}
+
+	HighestVal = (HighestVal + LowestVal) * Accuracy;
+
+	//find how many digits the value is
+	while (HighestVal > 1.0) {
+		HighestVal = HighestVal * 0.1;
+		DigitLength++;
+	}
+
+	//the main for loop
+	TArray<int64> RadixSortCounter;
+	for (int ForLoop = 0; ForLoop <= DigitLength; ForLoop++) {
+
+		RadixSortCounter.Empty();
+		RadixSortCounter.SetNum(10);
+		int64 DigAtColIndex = 0;
+
+		//find how many of each digit.
+		for (int32 j = 0; j < TotalItems; j++) {
+			transform = (getTransformAxis(RadixVectorArray[j], SortingAxis) + LowestVal) * Accuracy;
+			DigAtColIndex = GetDigitAtColumn(int64(floor(transform)), ForLoop);
+			RadixSortCounter[DigAtColIndex] = RadixSortCounter[DigAtColIndex] + 1;
+		}
+
+		// cant remember what this does, but something important im sure
+		for (int32 index = 1; index <= 9; index++) {
+			RadixSortCounter[index] = RadixSortCounter[index] + RadixSortCounter[index - 1];
+		}
+
+		int32 Rev = TotalItems - 1;
+		//the reverse for loop for sorting each digit into its bins
+		for (int32 i = Rev; i >= 0; i--) {
+
+			transform = (getTransformAxis(RadixVectorArray[i], SortingAxis) + LowestVal) * Accuracy;
+			DigAtColIndex = GetDigitAtColumn(int64(floor(transform)), ForLoop);
+			RadixSortCounter[DigAtColIndex] = RadixSortCounter[DigAtColIndex] - 1;
+			int32 arrayindex = RadixSortCounter[DigAtColIndex];
+			TempVectorArray[arrayindex] = RadixVectorArray[i];
+			TempIndexArr[arrayindex] = NewIndexArr[i];
+
+		}
+
+		RadixVectorArray = TempVectorArray;
+		NewIndexArr = TempIndexArr;
+	}
+
+	SortedItems = TempVectorArray;
+	NewIndexes = TempIndexArr;
+}
+
 void UBlueprintBoxSorting::CompareStringArrays(TArray<FString> ArrayA, TArray<FString> ArrayB, TArray<FString>& DiffA, TArray<FString>& DiffB, TArray<FString>& Parity)
 {
 	//making two sets so i can avoid TArray::RemoveAt, which is slow for doing random single item removal

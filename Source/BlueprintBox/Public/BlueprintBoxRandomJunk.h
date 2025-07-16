@@ -134,7 +134,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Box Overlap Detection"))
 	static TArray<int32> BoxOverlap(const TArray<FTransform>& Transforms, const FBox& Box);
 
-
 	//detects if a point is within a sphere.
 	//@param Radius - Radius in cm.
 	//@param Center - the center point of the sphere.
@@ -142,27 +141,28 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Is Within Sphere"))
 	static bool IsWithinSphere(float Radius, FVector Center, FVector Point);
 
-	//A smoothed perlin noise 1D function
-	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Perlin Noise 1D"))
-	static float PerlinNoise1D(float X, float Scale, int32 Seed);
+	//detects if a point is within a cube.
+	//@param Scale - Scale is in meters.
+	//@param Center - the center point of the box.
+	//@param Point - the point you'd like to check
+	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Is Within Box"))
+	static bool IsWithinBox(FVector Scale, FVector Center, FVector Point);
 
-	//A smoothed perlin noise 2D function
-	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Perlin Noise 2D"))
-	static float PerlinNoise2D(float X, float Y, float Scale, int32 Seed);
+	//converts a standard for loop input, to a spiral output starting from the center.
+	//Any index position can be given for the relative output position
+	//for example, 0, 1, 2, 3, 4, 5, 6, 7, 8, ect, would convert to 0,0, 1,0, 1,1, 0,1, -1,1, -1,0, -1,-1, -1,-2, 0,-2, ect. 
+	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Spiral Outwards"))
+	static void Spiral(int32 n, int32 &X, int32 &Y);
 
-	//A smoothed perlin noise 3D function
-	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Perlin Noise 3D"))
-	static float PerlinNoise3D(float X, float Y, float Z, float Scale, int32 Seed);
-
-	//allows you to do math ith no overhead. doesnt have any simd optimizations, but it will remove any overhead from the use of a for loop in 
+	//allows you to do math with no overhead. doesnt have any simd optimizations, but it will remove any overhead from the use of a for loop in blueprints
 	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Array Math (Int)"))
 	static void ArrayMathInt(const TArray<int32> Input, const TArray<FMathOperation> MathTypes, TArray<int32>& Return);
 
-	//allows you to do math ith no overhead. doesnt have any simd optimizations, but it will remove any overhead from the use of a for loop in 
+	//allows you to do math with no overhead. doesnt have any simd optimizations, but it will remove any overhead from the use of a for loop in blueprints
 	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Array Math (Int64)"))
 	static void ArrayMathInt64(const TArray<int64> Input, const TArray<FMathOperation> MathTypes, TArray<int64>& Return);
 
-	//allows you to do math ith no overhead. doesnt have any simd optimizations, but it will remove any overhead from the use of a for loop in 
+	//allows you to do math with no overhead. doesnt have any simd optimizations, but it will remove any overhead from the use of a for loop in blueprints
 	UFUNCTION(BlueprintCallable, meta = (Category = "Blueprint Box | Random Junk", DisplayName = "Array Math (Int64)"))
 	static void ArrayMathfloat(const TArray<float> Input, const TArray<FMathOperation> MathTypes, TArray<float>& Return);
  

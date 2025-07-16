@@ -31,6 +31,11 @@ double CosD(double A)
 	return FMath::Cos(PI / (180.f) * A);
 }
 
+FVector GetAbs(FVector A)
+{
+	return FVector(FMath::Abs(A.X), FMath::Abs(A.Y), FMath::Abs(A.Z));
+}
+
 //======================================================================================================================
 //											Random Junk
 //======================================================================================================================
@@ -368,7 +373,6 @@ TArray<int32> UBlueprintBoxRandomJunk::BoxOverlap(const TArray<FTransform>& Tran
 
 	for (int32 Index = 0; Index < Transforms.Num(); Index++)
 	{
-		const FMatrix& Matrix = Transforms[Index].ToMatrixWithScale();
 
 		scale = Transforms[Index].GetScale3D() * 50;
 		loc = Transforms[Index].GetLocation();
@@ -397,72 +401,54 @@ bool UBlueprintBoxRandomJunk::IsWithinSphere(float Radius, FVector Center, FVect
 	return false;
 }
 
-//all three functions below are pulled from the Simple noise generators plugin, but its using a bad random value algorithum, and it doesnt provide very accurate prelin noise at high scales
-//Perlin Noise 1D
-float UBlueprintBoxRandomJunk::PerlinNoise1D(float X, float Scale, int32 Seed)
+bool UBlueprintBoxRandomJunk::IsWithinBox(FVector Scale, FVector Center, FVector Point)
 {
-	if (Scale <= 0.f) Scale = 0.01f;
-	if (X == 0.f) X = 0.01f;
+	//gets it relative to zero
+	FVector point = GetAbs(Point - Center);
+	FVector ScaleCM = Scale * 100;
 
-	// Generate pseudo-random offsets from the seed
-	srand(Seed);
-	double OffsetX = rand();
-
-	// Adjust coordinates based on scale and apply the offsets
-	double AdjustedX = (X / Scale) + OffsetX;
-
-	// Generate Perlin noise value
-	double NoiseValue = FMath::PerlinNoise2D(FVector2D(AdjustedX, 1.0f)) * 2;
-
-	return NoiseValue;
+	if ((point.X <= ScaleCM.X) && (point.Y <= ScaleCM.Y) && (point.Y <= ScaleCM.Y)) {
+		return true;
+	}
+	return false;
 }
 
-float UBlueprintBoxRandomJunk::PerlinNoise2D(float X, float Y, float Scale, int32 Seed)
+void UBlueprintBoxRandomJunk::Spiral(int32 n, int32& X, int32& Y)
 {
-	// Ensure non-zero values
-	if (Scale <= 0.0) Scale = 0.001;
-	if (X == 0.0) X = 0.001;
-	if (Y == 0.0) Y = 0.001;
+	if (n == 0) { X = 0; Y = 0; return; }
+	n = n - 1;
 
-	// Generate pseudo-random offsets from the seed
-	srand(Seed);
-	double OffsetX = rand();
-	double OffsetY = rand();
+	// Compute the radius of the spiral
+	int r = FMath::FloorToInt((FMath::Sqrt(double(n + 1)) - 1) / 2) + 1;
 
-	// Adjust coordinates based on scale and apply the offsets
-	double AdjustedX = (X / Scale) + OffsetX;
-	double AdjustedY = (Y / Scale) + OffsetY;
+	// Compute p: the sum of points in inner square
+	int p = (8 * r * (r - 1)) / 2;
 
-	// Generate Perlin noise value
-	double NoiseValue = FMath::PerlinNoise2D(FVector2D(AdjustedX, AdjustedY));
+	// Compute side length of the current square's outer side
+	int en = r * 2;
 
-	return NoiseValue;
-}
+	// Compute the position on the current square's edge
+	int a = (1 + n - p) % (r * 8);
 
-//Perlin Noise 3D
-float UBlueprintBoxRandomJunk::PerlinNoise3D(float X, float Y, float Z, float Scale, int32 Seed)
-{
-	// Ensure non-zero values
-	if (Scale <= 0.0) Scale = 0.001;
-	if (X == 0.0) X = 0.001;
-	if (Y == 0.0) Y = 0.001;
-	if (Z == 0.0) Z = 0.001;
-
-	// Generate pseudo-random offsets from the seed
-	srand(Seed);
-	double OffsetX = rand();
-	double OffsetY = rand();
-	double OffsetZ = rand();
-
-	// Adjust coordinates based on scale and apply the offsets
-	double AdjustedX = (X / Scale) + OffsetX;
-	double AdjustedY = (Y / Scale) + OffsetY;
-	double AdjustedZ = (Z / Scale) + OffsetZ;
-
-	// Generate Perlin noise value using Unreal's built-in FMath function for 3D
-	double NoiseValue = FMath::PerlinNoise3D(FVector(AdjustedX, AdjustedY, AdjustedZ));
-
-	return NoiseValue;
+	// Determine the face (0: top, 1: right, 2: bottom, 3: left) and calculate the position
+	switch (a / (r * 2)) {
+		case 0:
+			X = a - r;  // x coordinate
+			Y = -r;     // y coordinate
+			break;
+		case 1:
+			X = r;
+			Y = (a % en) - r;
+			break;
+		case 2:
+			X = r - (a % en);
+			Y = r;
+			break;
+		case 3:
+			X = -r;
+			Y = r - (a % en);
+			break;
+	}
 }
 
 void UBlueprintBoxRandomJunk::ArrayMathInt(const TArray<int32> Input, const TArray<FMathOperation> MathTypes, TArray<int32>& Return)
